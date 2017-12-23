@@ -1,6 +1,8 @@
 import unittest
 import numpy as np
 import lane_finding as lf
+import glob
+import os
 
 
 class TestLaneFinding(unittest.TestCase):
@@ -68,6 +70,40 @@ class TestLaneFinding(unittest.TestCase):
         self.assertEqual(corners.shape[1], 1)
         self.assertEqual(corners.shape[2], 2)
 
+    def test_save_calibration_images_with_points(self):
+        path = self.config['calibration_file_pattern']
+        image_list = lf.get_calibration_file_paths(path)
+        image = lf.read_image(image_list[1])
+        gray_image = lf.convert_color_image_to_grayscale(image)
+        ret, corners = lf.find_chessboard_corners(gray_image,
+                                                  self.config['calibration_pattern_size_width'],
+                                                  self.config['calibration_pattern_size_height'],
+                                                  self.config['calibration_pattern_size_corners'])
+        original_saved_img_list = glob.glob(self.config['calibration_pattern_image_directory'] + '/*.jpg')
+        self.assertEqual(len(original_saved_img_list), 0)
+        lf.save_calibration_images_with_points(image, image_list[0], self.config['calibration_pattern_size_width'],
+                                               self.config['calibration_pattern_size_height'], corners, ret,
+                                               self.config['calibration_pattern_image_directory'])
+        after_saved_img_list = glob.glob(self.config['calibration_pattern_image_directory'] + '/*.jpg')
+        self.assertEqual(len(after_saved_img_list), 1)
+        os.remove(after_saved_img_list[0])
+
+    def test_get_calibration_object_and_image_points(self):
+        calibration_object_points, calibration_image_points = \
+            lf.get_calibration_object_and_image_points(self.config['calibration_file_pattern'],
+                                                       self.config['calibration_pattern_size_height'],
+                                                       self.config['calibration_pattern_size_width'],
+                                                       self.config['calibration_object_channels'],
+                                                       self.config['calibration_object_slice'],
+                                                       self.config['calibration_object_reshape_0'],
+                                                       self.config['calibration_object_reshape_1'],
+                                                       self.config['calibration_pattern_size_corners'],
+                                                       self.config['calibration_pattern_image_directory'])
+        self.assertIsNotNone(calibration_object_points)
+        self.assertIsNotNone(calibration_image_points)
+        saved_img_list = glob.glob(self.config['calibration_pattern_image_directory'] + '/*.jpg')
+        for path in saved_img_list:
+            os.remove(path)
 
     def tearDown(self):
         del self.config

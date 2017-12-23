@@ -102,6 +102,65 @@ def find_chessboard_corners(image, pattern_width, pattern_height, pattern_corner
     return cv2.findChessboardCorners(image, (pattern_width,
                                              pattern_height), input_corners)
 
+def save_calibration_images_with_points(original_image, original_image_file_name, width, height, corners, ret,
+                                        calibration_pattern_image_directory):
+    """
+
+    :param original_image:
+    :param height:
+    :param width:
+    :param corners:
+    :param ret:
+    :return:
+    """
+    img = cv2.drawChessboardCorners(original_image, (width, height), corners, ret)
+    cv2.imshow('img', img)
+    image_name = original_image_file_name.split('/')[-1]
+    write_filename = image_name.replace('.', '_cal.')
+    write_filename = calibration_pattern_image_directory + '/' + write_filename
+    cv2.imwrite(write_filename, img)
+    cv2.waitKey(500)
+
+
+def get_calibration_object_and_image_points(image_list_pattern, height, width, depth, slicer, reshape_0, reshape_1,
+                                            pattern_corners, calibration_pattern_image_directory):
+    """
+
+    :param image_list_pattern: Glob pattern for finding calibration images.
+    :param height: Height in number of corner points.
+    :param width: Width in number of corner points.
+    :param depth: Number of original color channels.
+    :param slicer: Value of the slicer for setting up initial object point array.
+    :param reshape_0: First reshape value for setting up initial object point array.
+    :param reshape_1: Second reshape value for setting up initial object point array.
+    :param pattern_corners: Corners to pre-feed finding the checkerboard corners.
+    :return:
+    """
+    object_points_list = []
+    image_points_list = []
+
+    object_points = create_object_points(height, width, depth)
+    object_points = modify_object_points(object_points, height, width, slicer, reshape_0, reshape_1)
+
+    image_paths = get_calibration_file_paths(image_list_pattern)
+
+    for file_name in image_paths:
+        image = read_image(file_name)
+        gray_image = convert_color_image_to_grayscale(image)
+
+        ret, corners = find_chessboard_corners(gray_image, width, height, pattern_corners)
+
+        if ret == True:
+            object_points_list.append(object_points)
+            image_points_list.append(corners)
+
+            # Draw and display corners
+            save_calibration_images_with_points(image, file_name, width, height, corners, ret,
+                                                calibration_pattern_image_directory)
+
+    cv2.destroyAllWindows()
+
+    return object_points_list, image_points_list
 
 
 if __name__ == "__main__":
