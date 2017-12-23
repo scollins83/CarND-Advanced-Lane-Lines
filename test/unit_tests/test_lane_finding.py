@@ -5,6 +5,9 @@ import lane_finding as lf
 
 class TestLaneFinding(unittest.TestCase):
 
+    def setUp(self):
+        self.config = lf.load_config('test_configuration.json')
+
     def test_create_object_points(self):
         grid_height = 6
         grid_width = 9
@@ -26,6 +29,14 @@ class TestLaneFinding(unittest.TestCase):
                                                   grid_width, slice_of_object,
                                                   reshape_0, reshape_1)
         self.assertListEqual(list(modified_object[-1]), [8., 5., 0.])
+
+    def test_get_calibration_file_paths(self):
+        path = self.config['calibration_file_pattern']
+        image_list = lf.get_calibration_file_paths(path)
+        self.assertEqual(len(image_list), 20)
+
+    def tearDown(self):
+        del self.config
 
 
 if __name__ == '__main__':
