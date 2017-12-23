@@ -35,6 +35,40 @@ class TestLaneFinding(unittest.TestCase):
         image_list = lf.get_calibration_file_paths(path)
         self.assertEqual(len(image_list), 20)
 
+    def test_read_image(self):
+        path = self.config['calibration_file_pattern']
+        image_list = lf.get_calibration_file_paths(path)
+        image = lf.read_image(image_list[0])
+        self.assertEqual(len(image.shape), 3)
+        self.assertEqual(image.shape[0], 720)
+        self.assertEqual(image.shape[1], 1280)
+        self.assertEqual(image.shape[2], 3)
+
+    def test_convert_color_image_to_grayscale(self):
+        path = self.config['calibration_file_pattern']
+        image_list = lf.get_calibration_file_paths(path)
+        image = lf.read_image(image_list[0])
+        gray_image = lf.convert_color_image_to_grayscale(image)
+        self.assertEqual(len(gray_image.shape), 2)
+        self.assertEqual(gray_image.shape[0], 720)
+        self.assertEqual(gray_image.shape[1], 1280)
+
+    def test_find_chessboard_corners(self):
+        path = self.config['calibration_file_pattern']
+        image_list = lf.get_calibration_file_paths(path)
+        image = lf.read_image(image_list[0])
+        gray_image = lf.convert_color_image_to_grayscale(image)
+        ret, corners = lf.find_chessboard_corners(gray_image,
+                                                  self.config['calibration_pattern_size_width'],
+                                                  self.config['calibration_pattern_size_height'],
+                                                  self.config['calibration_pattern_size_corners'])
+        self.assertFalse(ret)
+        self.assertEqual(len(corners.shape), 3)
+        self.assertEqual(corners.shape[0], 53)
+        self.assertEqual(corners.shape[1], 1)
+        self.assertEqual(corners.shape[2], 2)
+
+
     def tearDown(self):
         del self.config
 

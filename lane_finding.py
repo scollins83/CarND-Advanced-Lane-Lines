@@ -5,6 +5,7 @@ import logging
 import json
 import argparse
 import os
+import cv2
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,6 +66,42 @@ def get_calibration_file_paths(path):
     """
     # TODO: Modify this so it can accept a directory.
     return glob.glob(path)
+
+def read_image(path):
+    """
+    Read an individual image. Wrapper for OpenCV 'imread'
+    :param path: Image Path
+    :return: Array of images.
+    """
+    return cv2.imread(path)
+
+def convert_color_image_to_grayscale(color_image_array):
+    """
+    Converts a three-channel color image array to single-channel grayscale.
+    Wrapper for OpenCV cvtColor.
+    :param image: 3-channel color image array
+    :return: 1-channel grayscale image array of the input image
+    """
+    return cv2.cvtColor(color_image_array, cv2.COLOR_BGR2GRAY)
+
+def find_chessboard_corners(image, pattern_width, pattern_height, pattern_corners):
+    """
+    Function to find chessboard corners for calibration.
+    Wrapper of OpenCV findChessboardCorners.
+    :param image: Grayscale image array.
+    :param pattern_width: Number of corners wide for calibration.
+    :param pattern_height: Number of corners high for calibration.
+    :param pattern_corners: Number of corners to prepass for calibration.
+    :return: Indicate a return value, and also the array of corners found, in pixels.
+    """
+    if pattern_corners == "None":
+        input_corners = None
+    else:
+        input_corners = pattern_corners
+
+    return cv2.findChessboardCorners(image, (pattern_width,
+                                             pattern_height), input_corners)
+
 
 
 if __name__ == "__main__":
