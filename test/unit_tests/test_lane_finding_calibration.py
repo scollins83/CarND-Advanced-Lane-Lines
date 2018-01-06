@@ -1,11 +1,11 @@
 import unittest
 import numpy as np
-import lane_finding as lf
+import lane_finding_calibration as lf
 import glob
 import os
 
 
-class TestLaneFinding(unittest.TestCase):
+class TestLaneFindingCalibration(unittest.TestCase):
 
     def setUp(self):
         self.config = lf.load_config('test_configuration.json')

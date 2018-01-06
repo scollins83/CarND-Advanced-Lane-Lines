@@ -10,6 +10,7 @@ import cv2
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def parse_args(arguments):
     """
     Parses arguments given at the command line.
@@ -22,6 +23,7 @@ def parse_args(arguments):
 
     return vars(parser.parse_args(arguments))
 
+
 def load_config(config_name):
     """
     loads a json config file and returns a config dictionary
@@ -29,6 +31,7 @@ def load_config(config_name):
     with open(config_name) as config_file:
         configuration = json.load(config_file)
         return configuration
+
 
 def create_object_points(height, width, depth, data_type=np.float32):
     """
@@ -67,6 +70,7 @@ def get_calibration_file_paths(path):
     # TODO: Modify this so it can accept a directory.
     return glob.glob(path)
 
+
 def read_image(path):
     """
     Read an individual image. Wrapper for OpenCV 'imread'
@@ -74,6 +78,7 @@ def read_image(path):
     :return: Array of images.
     """
     return cv2.imread(path)
+
 
 def convert_color_image_to_grayscale(color_image_array):
     """
@@ -83,6 +88,7 @@ def convert_color_image_to_grayscale(color_image_array):
     :return: 1-channel grayscale image array of the input image
     """
     return cv2.cvtColor(color_image_array, cv2.COLOR_BGR2GRAY)
+
 
 def find_chessboard_corners(image, pattern_width, pattern_height, pattern_corners):
     """
@@ -101,6 +107,7 @@ def find_chessboard_corners(image, pattern_width, pattern_height, pattern_corner
 
     return cv2.findChessboardCorners(image, (pattern_width,
                                              pattern_height), input_corners)
+
 
 def save_calibration_images_with_points(original_image, original_image_file_name, width, height, corners, ret,
                                         calibration_pattern_image_directory):
