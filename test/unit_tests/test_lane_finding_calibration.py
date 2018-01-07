@@ -10,7 +10,7 @@ import cv2
 class TestLaneFindingCalibration(unittest.TestCase):
 
     def setUp(self):
-        self.config = lf.load_config('test_configuration.json')
+        self.config = lf.load_config('test_calibration_configuration.json')
 
     def test_create_object_points(self):
         grid_height = 6

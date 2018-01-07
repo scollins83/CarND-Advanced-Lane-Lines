@@ -1,0 +1,5 @@
+{
+  "calibration_pickle": "../../test_calibration_dict.pkl",
+  "object_points_pickle": "test_object_points.pkl",
+  "image_points_pickle": "test_image_points.pkl"
+}
