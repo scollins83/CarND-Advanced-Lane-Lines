@@ -8,5 +8,6 @@
   "calibration_pattern_size_height": 6,
   "calibration_pattern_size_corners": "None",
   "calibration_pattern_image_directory": "test_calibration_images_with_corners",
-  "calibration_save_path": "test_calibration_dict.pkl"
+  "calibration_save_path": "test_calibration_dict.pkl",
+  "calibration_image": "../../test_images/test_image.png"
 }

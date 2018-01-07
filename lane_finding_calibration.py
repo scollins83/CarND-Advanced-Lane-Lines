@@ -211,8 +211,21 @@ if __name__ == "__main__":
     config = load_config(args['config'])
 
     # Get the initial object points
+    object_points_list, \
+    image_points_list = get_calibration_object_and_image_points(config['calibration_file_pattern'],
+                                                                config['calibration_pattern_size_height'],
+                                                                config['calibration_pattern_size_width'],
+                                                                config['calibration_object_channels'],
+                                                                config['calibration_object_slice'],
+                                                                config['calibration_object_reshape_0'],
+                                                                config['calibration_object_reshape_1'],
+                                                                config['calibration_pattern_size_corners'],
+                                                                config['calibration_pattern_image_directory'])
 
-
-
+    # Take an image and calibrate the camera
+    image = read_image(config['calibration_image'])
+    image_size = (image.shape[1], image.shape[0])
+    calibration_dict = calibrate_camera(object_points_list, image_points_list, image_size)
+    save_camera_calibration(calibration_dict, config['calibration_save_path'])
 
     sys.exit(0)
