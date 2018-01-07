@@ -3,6 +3,8 @@ import numpy as np
 import lane_finding_calibration as lf
 import glob
 import os
+import pickle
+import cv2
 
 
 class TestLaneFindingCalibration(unittest.TestCase):
@@ -99,10 +101,61 @@ class TestLaneFindingCalibration(unittest.TestCase):
                                                        self.config['calibration_object_reshape_1'],
                                                        self.config['calibration_pattern_size_corners'],
                                                        self.config['calibration_pattern_image_directory'])
+
         self.assertIsNotNone(calibration_object_points)
         self.assertIsNotNone(calibration_image_points)
         saved_img_list = glob.glob(self.config['calibration_pattern_image_directory'] + '/*.jpg')
         for path in saved_img_list:
+            os.remove(path)
+
+    def test_calibrate_camera(self):
+        image = cv2.imread('../../test_images/test_image.png')
+        image_size = (image.shape[1], image.shape[0])
+        with open('test_object_points.pkl', 'rb') as f:
+            object_points = pickle.load(f)
+        with open('test_image_points.pkl', 'rb') as g:
+            image_points = pickle.load(g)
+        camera_calibration_dict = lf.calibrate_camera(object_points,
+                                                      image_points,
+                                                      image_size)
+        test_dict = {'camera_matrix': np.array([[1.29383719e+03,
+                                                 0.00000000e+00,
+                                                 3.24452248e+02],
+                                                [0.00000000e+00,
+                                                 1.28959394e+03,
+                                                 2.70105841e+02],
+                                                [0.00000000e+00,
+                                                 0.00000000e+00,
+                                                 1.00000000e+00]]),
+                     'distortion_coeffs': np.array([[-0.5534137,
+                                                     0.56037615,
+                                                     0.00537364,
+                                                     0.01884776,
+                                                     -0.3336068]])}
+        self.assertEqual(camera_calibration_dict['camera_matrix'].all(),
+                         test_dict['camera_matrix'].all())
+        self.assertEqual(camera_calibration_dict['distortion_coeffs'].all(),
+                         test_dict['distortion_coeffs'].all())
+
+    def test_save_camera_calibration(self):
+        test_dict = {'camera_matrix': np.array([[1.29383719e+03,
+                                                 0.00000000e+00,
+                                                 3.24452248e+02],
+                                                [0.00000000e+00,
+                                                 1.28959394e+03,
+                                                 2.70105841e+02],
+                                                [0.00000000e+00,
+                                                 0.00000000e+00,
+                                                 1.00000000e+00]]),
+                     'distortion_coeffs': np.array([[-0.5534137,
+                                                     0.56037615,
+                                                     0.00537364,
+                                                     0.01884776,
+                                                     -0.3336068]])}
+        lf.save_camera_calibration(test_dict, self.config['calibration_save_path'])
+        saved_path = glob.glob(self.config['calibration_save_path'])
+        self.assertEqual(len(saved_path), 1)
+        for path in saved_path:
             os.remove(path)
 
     def tearDown(self):

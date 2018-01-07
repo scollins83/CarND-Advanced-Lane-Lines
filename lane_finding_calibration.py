@@ -6,6 +6,7 @@ import json
 import argparse
 import os
 import cv2
+import pickle
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -169,6 +170,36 @@ def get_calibration_object_and_image_points(image_list_pattern, height, width, d
 
     return object_points_list, image_points_list
 
+def calibrate_camera(object_points, image_points, image_size):
+    """
+
+    :param object_points:
+    :param image_points:
+    :param image_size:
+    :return:
+    """
+    _ , camera_matrix, distortion_coeffs, _, _ = cv2.calibrateCamera(object_points,
+                                                                     image_points,
+                                                                     image_size,
+                                                                     None,
+                                                                     None)
+    calibration_dict = {}
+    calibration_dict['camera_matrix'] = camera_matrix
+    calibration_dict['distortion_coeffs'] = distortion_coeffs
+
+    return calibration_dict
+
+
+def save_camera_calibration(calibration_dict, save_path):
+    """
+
+    :param calibration_dict:
+    :param save_path:
+    :return:
+    """
+    with open(save_path, 'wb') as file:
+        pickle.dump(calibration_dict, file)
+
 
 if __name__ == "__main__":
 
@@ -179,6 +210,9 @@ if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
     config = load_config(args['config'])
 
-    calibration_file_pattern = config['calibration_file_pattern']
+    # Get the initial object points
+
+
+
 
     sys.exit(0)
