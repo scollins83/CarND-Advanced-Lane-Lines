@@ -62,7 +62,7 @@ def modify_object_points(object_points, height, width, slicer,
     return object_points
 
 
-def get_calibration_file_paths(path):
+def get_image_file_paths(path):
     """
 
     :param path:
@@ -150,7 +150,7 @@ def get_calibration_object_and_image_points(image_list_pattern, height, width, d
     object_points = create_object_points(height, width, depth)
     object_points = modify_object_points(object_points, height, width, slicer, reshape_0, reshape_1)
 
-    image_paths = get_calibration_file_paths(image_list_pattern)
+    image_paths = get_image_file_paths(image_list_pattern)
 
     for file_name in image_paths:
         image = read_image(file_name)
@@ -202,9 +202,6 @@ def save_camera_calibration(calibration_dict, save_path):
 
 
 if __name__ == "__main__":
-
-    # Set TensorFlow logging so it isn't so verbose.
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     # Load the necessary parameters
     args = parse_args(sys.argv[1:])
