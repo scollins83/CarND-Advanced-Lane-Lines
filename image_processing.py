@@ -6,6 +6,8 @@ import logging
 import numpy as np
 import pickle
 from tracker import Tracker
+from moviepy.editor import VideoFileClip
+from IPython.display import HTML
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -207,8 +209,6 @@ def window_mask(width, height, img_ref, center, level):
     return output
 
 
-
-
 if __name__ == "__main__":
 
     # Set TensorFlow logging so it isn't so verbose.
@@ -320,12 +320,13 @@ if __name__ == "__main__":
 
         left_lane = np.array(list(zip(np.concatenate((left_fitx-window_width/2, left_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))),np.int32)
         right_lane = np.array(list(zip(np.concatenate((right_fitx-window_width/2, right_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)
-        middle_marker = np.array(list(zip(np.concatenate((right_fitx-window_width/2,right_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)
+        middle_marker = np.array(list(zip(np.concatenate((left_fitx+window_width/2,right_fitx[::-1]-window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)
 
         road = np.zeros_like(img)
         road_bkg = np.zeros_like(img)
         cv2.fillPoly(road, [left_lane], color=[255, 0, 0])
         cv2.fillPoly(road, [right_lane], color=[0, 0, 255])
+        cv2.fillPoly(road, [middle_marker], color=[0, 255, 0])
         cv2.fillPoly(road_bkg, [left_lane], color=[255, 255, 255])
         cv2.fillPoly(road_bkg, [right_lane], color=[255, 255, 255])
 
