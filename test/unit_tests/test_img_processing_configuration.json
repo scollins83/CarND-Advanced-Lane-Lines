@@ -1,5 +1,10 @@
 {
-  "calibration_pickle": "../../test_calibration_dict.pkl",
+  "calibration_pickle": "test_cal_dict.pkl",
   "object_points_pickle": "test_object_points.pkl",
-  "image_points_pickle": "test_image_points.pkl"
+  "image_points_pickle": "test_image_points.pkl",
+  "calibration_pattern_size_width": 9,
+  "calibration_pattern_size_height": 6,
+  "calibration_pattern_size_corners": "None",
+  "image_list": "../../test_images/test*.jpg",
+  "undistorted_save_pattern": "../../test_images/tracked_"
 }

@@ -36,12 +36,12 @@ class TestLaneFindingCalibration(unittest.TestCase):
 
     def test_get_calibration_file_paths(self):
         path = self.config['calibration_file_pattern']
-        image_list = lf.get_calibration_file_paths(path)
+        image_list = lf.get_image_file_paths(path)
         self.assertEqual(len(image_list), 20)
 
     def test_read_image(self):
         path = self.config['calibration_file_pattern']
-        image_list = lf.get_calibration_file_paths(path)
+        image_list = lf.get_image_file_paths(path)
         image = lf.read_image(image_list[0])
         self.assertEqual(len(image.shape), 3)
         self.assertEqual(image.shape[0], 720)
@@ -50,7 +50,7 @@ class TestLaneFindingCalibration(unittest.TestCase):
 
     def test_convert_color_image_to_grayscale(self):
         path = self.config['calibration_file_pattern']
-        image_list = lf.get_calibration_file_paths(path)
+        image_list = lf.get_image_file_paths(path)
         image = lf.read_image(image_list[0])
         gray_image = lf.convert_color_image_to_grayscale(image)
         self.assertEqual(len(gray_image.shape), 2)
@@ -59,7 +59,7 @@ class TestLaneFindingCalibration(unittest.TestCase):
 
     def test_find_chessboard_corners(self):
         path = self.config['calibration_file_pattern']
-        image_list = lf.get_calibration_file_paths(path)
+        image_list = lf.get_image_file_paths(path)
         image = lf.read_image(image_list[0])
         gray_image = lf.convert_color_image_to_grayscale(image)
         ret, corners = lf.find_chessboard_corners(gray_image,
@@ -74,7 +74,7 @@ class TestLaneFindingCalibration(unittest.TestCase):
 
     def test_save_calibration_images_with_points(self):
         path = self.config['calibration_file_pattern']
-        image_list = lf.get_calibration_file_paths(path)
+        image_list = lf.get_image_file_paths(path)
         image = lf.read_image(image_list[1])
         gray_image = lf.convert_color_image_to_grayscale(image)
         ret, corners = lf.find_chessboard_corners(gray_image,
@@ -109,7 +109,7 @@ class TestLaneFindingCalibration(unittest.TestCase):
             os.remove(path)
 
     def test_calibrate_camera(self):
-        image = cv2.imread('../../test_images/test_image.png')
+        image = cv2.imread('../../test_images/ckbd_test_image.jpg')
         image_size = (image.shape[1], image.shape[0])
         with open('test_object_points.pkl', 'rb') as f:
             object_points = pickle.load(f)
