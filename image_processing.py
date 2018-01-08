@@ -5,6 +5,7 @@ import sys
 import logging
 import numpy as np
 import pickle
+from tracker import Tracker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -202,6 +203,7 @@ def window_mask(width, height, img_ref, center, level):
     :return:
     """
     output = np.zeros_like(img_ref)
+    output[int(img_ref.shape[0]-(level+1)*height):int(img_ref.shape[0]-level*height), max(0, int(center-width)):min(int(center+width), img_ref.shape[1])] = 1
     return output
 
 
@@ -247,7 +249,6 @@ if __name__ == "__main__":
 
         # Set up Perspective Transform Area
         img_size = (img.shape[1], img.shape[0])
-        print(img_size)
         bot_width = .76 # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
         mid_width = .12 # Percent of middle trapezoid height
         height_pct = .62 # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
@@ -268,5 +269,39 @@ if __name__ == "__main__":
 
         write_name = config['undistorted_save_pattern'] + str(index) + '_warped.jpg'
         cv2.imwrite(write_name, warped)
+
+        # Set up the overall class to do all the tracking
+        window_width = 25 # Play with these
+        window_height = 80
+
+        curve_centers = Tracker(window_width=window_width, window_height=window_height,
+                                margin=25, ym=10/720, xm=4/384, smooth_factor=15)
+
+        window_centroids = curve_centers.find_window_centroids(warped) # Gives us center point to draw lane lines
+
+        l_points = np.zeros_like(warped)
+        r_points = np.zeros_like(warped)
+
+
+        for level in range(0, len(window_centroids)):
+            # Window mask is function to draw window areas
+            l_mask = window_mask(window_width, window_height, warped, window_centroids[level][0], level)
+            r_mask = window_mask(window_width, window_height, warped, window_centroids[level][1], level)
+
+            # Add graphic points from window mask here to total pixels found
+            l_points[(l_points == 255) | ((l_mask == 1))] = 255
+            r_points[(r_points == 255) | ((r_mask == 1))] = 255
+
+        # Draw the results
+        template = np.array(r_points+l_points, np.uint8)
+        zero_channel = np.zeros_like(template)
+        template = np.array(cv2.merge((zero_channel, template, zero_channel)), np.uint8)
+        warpage = np.array(cv2.merge((warped, warped, warped)), np.uint8)
+
+        result = cv2.addWeighted(warpage, 1, template, 0.5, 0.0) # Overlay the original road img with window results; not showing up.
+
+        write_name = config['undistorted_save_pattern'] + str(index) + '_overlay.jpg'
+        cv2.imwrite(write_name, result)
+
 
     sys.exit(0)
