@@ -245,5 +245,28 @@ if __name__ == "__main__":
         write_name = config['undistorted_save_pattern'] + str(index) + '_binary.jpg'
         cv2.imwrite(write_name, preprocessed_image)
 
+        # Set up Perspective Transform Area
+        img_size = (img.shape[1], img.shape[0])
+        print(img_size)
+        bot_width = .76 # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
+        mid_width = .12 # Percent of middle trapezoid height
+        height_pct = .62 # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
+        bottom_trim = .935 # Percent from top to bottom to avoid car hood
+        src = np.float32([[img.shape[1]*(.5-mid_width/2), img.shape[0]*height_pct],
+                          [img.shape[1]*(.5+mid_width/2), img.shape[0]*height_pct],
+                          [img.shape[1]*(.5-bot_width/2), img.shape[0]*bottom_trim],
+                          [img.shape[1]*(.5+bot_width/2), img.shape[0]*bottom_trim]])
+        offset = img_size[0]*.35
+        dst = np.float32([[offset, 0],
+                          [img_size[0]-offset, 0],
+                          [offset, img_size[1]],
+                          [img_size[0]-offset, img_size[1]]])
+
+        M = cv2.getPerspectiveTransform(src, dst)
+        Minv = cv2.getPerspectiveTransform(dst, src)
+        warped = cv2.warpPerspective(preprocessed_image, M, img_size, flags=cv2.INTER_LINEAR)
+
+        write_name = config['undistorted_save_pattern'] + str(index) + '_warped.jpg'
+        cv2.imwrite(write_name, warped)
 
     sys.exit(0)
