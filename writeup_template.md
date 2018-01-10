@@ -19,8 +19,8 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/undistort_output.png "Undistorted"
-[image2]: ./test_images/test1.jpg "Road Transformed"
+[original_calibration_image]: ./test/unit_tests/test_image.png "Original calibration image"
+[undistorted_calibration_image]: ./test/unit_tests/und_image.png "Undistorted"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
@@ -37,15 +37,18 @@ The goals / steps of this project are the following:
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
 
-You're reading it!
+Please see the rest of this file. 
 
 ### Camera Calibration
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-The code for this step is contained in the first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
+The code for this step is located in the script [lane_finding_calibration.py](../lane_finding_calibration.py)
+That particular script consists of functions, and the 'driver' is run in order under the default main in line 204. I set up my scripts to use configuration files for parameters as I find these to be extremely useful in being able to iterate quickly and they also make it easy to maintain a record of sorts of which parameters I used. My unit testing calibration file was sufficient to train this model, and that configuration file is located in test/unit_tests/test_calibration_configuration.json.
 
-I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
+My lane_finding_calibration.py driver script calculates the object and image points in a single function, which wraps together several other functions in the script. That wrapper function is 'get_calibration_object_and_image_points', which begins at line 133. The first call is to create_object_points (line 37), which creates an array of zeros, and then reshapes that array with the 'modify_object_points' function starting in line 49. The wrapper then gets the list of images (line 65) and iterates through them, first converting them to grayscale (function starts on line 83) and then finding the chessboard corners (function starts on line 93). If corners are found, the object points and corners are retained, the new corner points are drawn onto images and saved (function starts line 112), and then the retained lists of object points and image points are returned. From there, a calibration image is read in (line 222), the size noted (line 223), and a calibration dictionary is generated from the function 'calibrate_camera', which starts on line 192, and this dictionary contains the camera matrix and the distortion coefficients. Lastly, that calibration dictionary is saved (line 225), and the driver exits. 
+
+The wrapper function start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
 
