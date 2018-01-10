@@ -224,25 +224,26 @@ def process_image(img):
     # Undistort
     img = cv2.undistort(img, matrix, dist, None, matrix)
 
-    # Process image and generate binary pixel
+    # Process image and generate binary pictures
     preprocessed_image = np.zeros_like(img[:, :, 0])
-    gradx = abs_sobel_thresh(img, orient='x', thresh_min=12, thresh_max=255)
-    grady = abs_sobel_thresh(img, orient='y', thresh_min=25, thresh_max=255)
-    c_binary = color_threshold(img, sthresh=(100, 255), vthresh=(50, 255))
+    gradx = abs_sobel_thresh(img, orient='x', thresh_min=config['sobel_x_min'], thresh_max=config['sobel_x_max'])
+    grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
+    c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
+                               vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
     preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
     # TODO: Lots of experimentation to how to get the best binary images
 
     # Set up Perspective Transform Area
     img_size = (img.shape[1], img.shape[0])
-    bot_width = .76  # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
-    mid_width = .12  # Percent of middle trapezoid height
-    height_pct = .62  # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
-    bottom_trim = .935  # Percent from top to bottom to avoid car hood
+    bot_width = config['pt_bottom_width']  # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
+    mid_width = config['pt_middle_width']  # Percent of middle trapezoid height
+    height_pct = config['pt_height_percent']  # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
+    bottom_trim = config['pt_bottom_trim']  # Percent from top to bottom to avoid car hood
     src = np.float32([[img.shape[1] * (.5 - mid_width / 2), img.shape[0] * height_pct],
                       [img.shape[1] * (.5 + mid_width / 2), img.shape[0] * height_pct],
                       [img.shape[1] * (.5 - bot_width / 2), img.shape[0] * bottom_trim],
                       [img.shape[1] * (.5 + bot_width / 2), img.shape[0] * bottom_trim]])
-    offset = img_size[0] * .23
+    offset = img_size[0] * config['pt_offset']
     dst = np.float32([[offset, 0],
                       [img_size[0] - offset, 0],
                       [offset, img_size[1]],
@@ -253,11 +254,14 @@ def process_image(img):
     warped = cv2.warpPerspective(preprocessed_image, M, img_size, flags=cv2.INTER_LINEAR)
 
     # Set up the overall class to do all the tracking
-    window_width = 25  # Play with these; Switched to 25 so it wouldn't get lost in thicker lines.
+    window_width = config['conv_window_width']  # Play with these; Switched to 25 so it wouldn't get lost in thicker lines.
     window_height = config['conv_window_height'] # 70
 
     curve_centers = Tracker(window_width=window_width, window_height=window_height,
-                            margin=25, ym=10 / 720, xm=4 / 384, smooth_factor=15)
+                            margin=config['tracker_margin'],
+                            ym=config['tracker_ym_numerator'] / config['tracker_ym_denominator'],
+                            xm=config['tracker_xm_numerator'] / config['tracker_xm_denominator'],
+                            smooth_factor=config['tracker_smoothing_factor'])
 
     window_centroids = curve_centers.find_window_centroids(warped)  # Gives us center point to draw lane lines
 
@@ -338,7 +342,7 @@ def process_image(img):
     if center_diff <= 0:
         side_pos = 'right'
 
-    cv2.putText(result, 'Radius of curvagure = ' + str(round(curverad, 3)) + '(m)', (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+    cv2.putText(result, 'Radius of curvature = ' + str(round(curverad, 3)) + '(m)', (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
                 1, (255, 255, 255), 2)
     cv2.putText(result, "Vehicle is " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center', (50, 100),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)

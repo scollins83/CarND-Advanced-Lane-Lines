@@ -12,26 +12,6 @@ from IPython.display import HTML
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def undistort_image(image, object_points, image_points):
-    """
-
-    :param image:
-    :param object_points:
-    :param image_points:
-    :return:
-    """
-    # Convert image to grayscale
-    gray_scale_image = lfc.convert_color_image_to_grayscale(image)
-
-    # Calibrate the camera
-    calibration_dict = lfc.calibrate_camera(object_points, image_points, gray_scale_image.shape[::-1])
-
-    # Return the undistorted image
-    return cv2.undistort(image, calibration_dict['camera_matrix'],
-                         calibration_dict['distortion_coeffs'],
-                         None,
-                         calibration_dict['camera_matrix'])
-
 
 def unwarp_corners(image, corners_width, corners_height, pattern_corners, camera_matrix, dist_coefficients):
     """
@@ -233,31 +213,32 @@ if __name__ == "__main__":
         # Undistort
         img = cv2.undistort(img, matrix, dist, None, matrix)
 
-        write_name = config['undistorted_save_pattern'] + str(index) + '.jpg'
+        write_name = config['tracked_save_pattern'] + str(index) + '_undistorted.jpg'
         cv2.imwrite(write_name, img)
 
-        # Process image and generate binary pixel
+        # Process image and generate binary pictures
         preprocessed_image = np.zeros_like(img[:, :, 0])
-        gradx = abs_sobel_thresh(img, orient='x', thresh_min=12, thresh_max=255)
-        grady = abs_sobel_thresh(img, orient='y', thresh_min=25, thresh_max=255)
-        c_binary = color_threshold(img, sthresh=(100, 255), vthresh=(50, 255))
+        gradx = abs_sobel_thresh(img, orient='x', thresh_min=config['sobel_x_min'], thresh_max=config['sobel_x_max'])
+        grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
+        c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
+                                   vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
         preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
         # Lots of experimentation to how to get the best binary images
 
-        write_name = config['undistorted_save_pattern'] + str(index) + '_binary.jpg'
+        write_name = config['tracked_save_pattern'] + str(index) + '_binary.jpg'
         cv2.imwrite(write_name, preprocessed_image)
 
         # Set up Perspective Transform Area
         img_size = (img.shape[1], img.shape[0])
-        bot_width = .76 # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
-        mid_width = .12 # Percent of middle trapezoid height
-        height_pct = .62 # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
-        bottom_trim = .935 # Percent from top to bottom to avoid car hood
+        bot_width = config['pt_bottom_width'] # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
+        mid_width = config['pt_middle_width'] # Percent of middle trapezoid height
+        height_pct = config['pt_height_percent'] # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
+        bottom_trim = config['pt_bottom_trim'] # Percent from top to bottom to avoid car hood
         src = np.float32([[img.shape[1]*(.5-mid_width/2), img.shape[0]*height_pct],
                           [img.shape[1]*(.5+mid_width/2), img.shape[0]*height_pct],
                           [img.shape[1]*(.5-bot_width/2), img.shape[0]*bottom_trim],
                           [img.shape[1]*(.5+bot_width/2), img.shape[0]*bottom_trim]])
-        offset = img_size[0]*.23
+        offset = img_size[0] * config['pt_offset']
         dst = np.float32([[offset, 0],
                           [img_size[0]-offset, 0],
                           [offset, img_size[1]],
@@ -267,15 +248,18 @@ if __name__ == "__main__":
         Minv = cv2.getPerspectiveTransform(dst, src)
         warped = cv2.warpPerspective(preprocessed_image, M, img_size, flags=cv2.INTER_LINEAR)
 
-        write_name = config['undistorted_save_pattern'] + str(index) + '_warped.jpg'
+        write_name = config['tracked_save_pattern'] + str(index) + '_warped.jpg'
         cv2.imwrite(write_name, warped)
 
         # Set up the overall class to do all the tracking
-        window_width = 25 # Play with these; Switched to 25 so it wouldn't get lost in thicker lines.
-        window_height = 70
+        window_width = config['conv_window_width'] # Play with these; Switched to 25 so it wouldn't get lost in thicker lines.
+        window_height = config['conv_window_height']
 
         curve_centers = Tracker(window_width=window_width, window_height=window_height,
-                                margin=25, ym=10/720, xm=4/384, smooth_factor=15)
+                                margin=config['tracker_margin'],
+                                ym=config['tracker_ym_numerator'] / config['tracker_ym_denominator'],
+                                xm=config['tracker_xm_numerator'] / config['tracker_xm_denominator'],
+                                smooth_factor=config['tracker_smoothing_factor'])
 
         window_centroids = curve_centers.find_window_centroids(warped) # Gives us center point to draw lane lines
 
@@ -339,8 +323,12 @@ if __name__ == "__main__":
         ym_per_pix = curve_centers.ym_per_pix
         xm_per_pix = curve_centers.xm_per_pix
 
-        curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32)*ym_per_pix, np.array(leftx, np.float32)*xm_per_pix, 2)
-        curverad = ((1 + (2*curve_fit_cr[0]*yvals[-1]*ym_per_pix + curve_fit_cr[1])**2)**1.5)/np.absolute(2*curve_fit_cr[0])
+        left_curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32)*ym_per_pix, np.array(leftx, np.float32)*xm_per_pix, 2)
+        left_curverad = ((1 + (2*left_curve_fit_cr[0]*yvals[-1]*ym_per_pix + left_curve_fit_cr[1])**2)**1.5)/np.absolute(2*left_curve_fit_cr[0])
+
+        right_curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32)*ym_per_pix, np.array(rightx, np.float32)*xm_per_pix, 2)
+        right_curverad = ((1 + (2*right_curve_fit_cr[0]*yvals[-1]*ym_per_pix + right_curve_fit_cr[1])**2)**1.5)/np.absolute(2*right_curve_fit_cr[0])
+
 
         camera_center = (left_fitx[-1] + right_fitx[-1])/2
         center_diff = (camera_center-warped.shape[1]/2)*xm_per_pix
@@ -348,10 +336,12 @@ if __name__ == "__main__":
         if center_diff <= 0:
             side_pos = 'right'
 
-        cv2.putText(result, 'Radius of curvagure = ' + str(round(curverad, 3))+'(m)',(50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        cv2.putText(result, "Vehicle is " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center', (50,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(result, 'Left radius of curvature = ' + str(round(left_curverad, 3))+'(m)',(50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(result, 'Right radius of curvature = ' + str(round(right_curverad, 3)) + '(m)', (50, 100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(result, "Vehicle is " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center', (50,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-        write_name = config['undistorted_save_pattern'] + str(index) + '_road_round4.jpg'
+        write_name = config['tracked_save_pattern'] + str(index) + '_road_round4.jpg'
         cv2.imwrite(write_name, result)
 
 

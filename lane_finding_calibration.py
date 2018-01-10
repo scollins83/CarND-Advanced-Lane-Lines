@@ -68,7 +68,6 @@ def get_image_file_paths(path):
     :param path:
     :return:
     """
-    # TODO: Modify this so it can accept a directory.
     return glob.glob(path)
 
 
