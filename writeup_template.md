@@ -21,8 +21,10 @@ The goals / steps of this project are the following:
 
 [original_calibration_image]: ./test/unit_tests/test_image.png "Original calibration image"
 [undistorted_calibration_image]: ./test/unit_tests/und_image.png "Undistorted"
+[undistorted]: ./tuning_images/run4_3_undistorted.jpg "Undistorted road"
+[original]: ./test_images/test_4.jpg "Original road"
 [binary]: ./tuning_images/run4_3_binary.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
+[warped]: ./tuning_images/run4_3_warped.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
@@ -65,28 +67,23 @@ For the remaineder of the code, I switched to the image_processing.py script, an
 
 In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 214, and saved the output in order to be able to tune the code later and provide images for this writeup. 
 
+Original image in following processing examples:
+![alt text][original]  
+
+Undistorted:  
+![alt text][undistorted]
+
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used both sobel thresholds (function begins on line 74) and color thresholds (function begins on line 154) to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+I used both sobel thresholds (function begins on line 74) and color thresholds (function begins on line 154) to generate a binary image (thresholding steps at lines 220 through 225 in `image_processing.py`).  Here's an example of my output for this step.
 
 ![alt text][binary]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+The code for my perspective transform occurs in lines 232 through 249 in the file `image_processing.py`. I somewhat programmatically determined a trapezoid to use for the source rectangle on the image to warp, in lines 233 through 236. While this didn't yield as potentially perfect a result as hardcoding the points likely would have, as long as the trapezoid din't appear to be too far off of any one given road, this approach seemed more conducive to allowing the code to adapt to several different types of roads which the car may encounter. 
 
-```python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
-```
+The destination was selected using an offset percentage, and then was subtracted from the image width where necessary in lines 242 through 245. 
 
 This resulted in the following source and destination points:
 
