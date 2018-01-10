@@ -21,7 +21,7 @@ The goals / steps of this project are the following:
 
 [original_calibration_image]: ./test/unit_tests/test_image.png "Original calibration image"
 [undistorted_calibration_image]: ./test/unit_tests/und_image.png "Undistorted"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
+[binary]: ./tuning_images/run4_3_binary.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
@@ -52,20 +52,24 @@ The wrapper function start by preparing "object points", which will be the (x, y
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
 
-![alt text][image1]
+![alt text][original_calibration_image]
 
 ### Pipeline (single images)
 
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+![alt text][undistorted_calibration_image]
+
+For the remaineder of the code, I switched to the image_processing.py script, and again, the driver is in the default main method starting at line 192. 
+
+In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 214, and saved the output in order to be able to tune the code later and provide images for this writeup. 
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+I used both sobel thresholds (function begins on line 74) and color thresholds (function begins on line 154) to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
 
-![alt text][image3]
+![alt text][binary]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
