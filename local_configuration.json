@@ -7,7 +7,7 @@
   "calibration_pattern_size_corners": "None",
   "image_list": "test_images/test*.jpg",
   "tracked_save_pattern": "tuning_images/run1_",
-  "output_video": "project_output_video_5.mp4",
+  "output_video": "project_output_video.mp4",
   "input_video": "project_video.mp4",
   "sobel_x_min": 15,
   "sobel_x_max": 255,
