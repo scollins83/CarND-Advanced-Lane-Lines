@@ -1,0 +1,14 @@
+{
+  "calibration_file_pattern": "../../camera_cal/calibration*.jpg",
+  "calibration_object_slice": 2,
+  "calibration_object_channels": 3,
+  "calibration_object_reshape_0": -1,
+  "calibration_object_reshape_1": 2,
+  "calibration_pattern_size_width": 9,
+  "calibration_pattern_size_height": 6,
+  "calibration_pattern_size_corners": "None",
+  "calibration_pattern_image_directory": "test_calibration_images_with_corners",
+  "calibration_save_path": "test_calibration_dict.pkl",
+  "calibration_image": "../../test_images/test_image.png"
+}
+
