@@ -22,10 +22,12 @@ The goals / steps of this project are the following:
 [original_calibration_image]: ./test/unit_tests/test_image.png "Original calibration image"
 [undistorted_calibration_image]: ./test/unit_tests/und_image.png "Undistorted"
 [undistorted]: ./tuning_images/run4_3_undistorted.jpg "Undistorted road"
-[original]: ./test_images/test_4.jpg "Original road"
+[original]: ./test_images/tracked_3.jpg "Original road"
 [binary]: ./tuning_images/run4_3_binary.jpg "Binary Example"
 [warped]: ./tuning_images/run4_3_warped.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
+[warp_boxes]: ./test_images/tracked_3_overlay.jpg "Warp Lines Highlighted"
+[lines_only]: ./test_images/tracked_3_road.jpg "Road lines only"
+[lines_on_road]: ./test_images/tracked_3_road_round3.jpg "Lines on Road"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
@@ -63,7 +65,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][undistorted_calibration_image]
 
-For the remaineder of the code, I switched to the image_processing.py script, and again, the driver is in the default main method starting at line 192. 
+For the remaineder of the code, I switched to the image_processing.py script, and again, the driver is in the default main method starting at line 192. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor a few things and then tuned the input parameters. 
 
 In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 214, and saved the output in order to be able to tune the code later and provide images for this writeup. 
 
@@ -85,7 +87,7 @@ The code for my perspective transform occurs in lines 232 through 249 in the fil
 
 The destination was selected using an offset percentage, and then was subtracted from the image width where necessary in lines 242 through 245. 
 
-This resulted in the following source and destination points:
+This resulted in the following source and destination points, programmatically:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
@@ -94,16 +96,26 @@ This resulted in the following source and destination points:
 | 1127, 720     | 960, 720      |
 | 695, 460      | 960, 0        |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image, although I did not retain these images from preprocessing.
 
-![alt text][image4]
+However, I did save out the warped images themselves and show and example here, and used the appearance of the lane lines in these transforms and the appearance of noise to tune the offset and trapezoid measurement numbers to maximize bold lines and the least amount of noise in the transformed pictures in my sample images:
+
+![alt text][warped]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+I used the one-dimensional convolution method noted in the class content and walkthrough video to find my lane lines, as it was a technique I hadn't tried before (I used histograms in past work with audio for event detection and timbre analysis). This code starts in image_processing.py line 255 through 303, and the Tracker class (used in the place of the suggested 'line' class for storing line attributes) in tracker.py. I tuned the height and width of the convolution window to find the lines, and then used a tracker object to return the curve centers (image_preprocessing.py, line 258). I then used the curve centers to find the window centroids of my warped image (image_preprocessing.py line 264, and tracker.py line 26 through 60). With those found, the window mask was used in order to be able to draw those areas on the image, and that's shown in image_processing.py lines 272 through 283, and the boxed lines were drawn onto the warped image. I didn't consistently use this view in tuning, but it was a helpful visualization to show how the convolution window height and width, along with other noise in the warp image, contributed to the video outcomes. 
 
-![alt text][image5]
+![alt text][warped_boxes]
 
+In order to actually get bona-fide lane lines from those convolutions, I used the numpy polyfit function to fit the left and right lanes to a 2nd degree polynomial (I did also explore what other orders of polynomials would do during tuning, but those results obviously weren't great). 
+
+After finding those lines, clear lines could be obtained.  
+![alt text][lines_only]  
+  
+From there, I was able to draw the lines back on the road
+![alt text][lines_on_road]  
+  
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 I did this in lines # through # in my code in `my_other_file.py`
