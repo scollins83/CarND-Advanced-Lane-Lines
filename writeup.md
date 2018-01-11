@@ -65,9 +65,9 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][undistorted_calibration_image]
 
-For the remaineder of the code, I switched to the video_processor.py script, and again, the driver is in the default main method starting at line 192. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor a few things and then tuned the input parameters. 
+For the remaineder of the code, I switched to the video_processor.py script, and again, the driver is in the default main method starting at line 234, and the main image processing is wrapped in a function that begins on line 101. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor quite a few things during tuning and then tuned the input parameters. 
 
-In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 214, and saved the output in order to be able to tune the code later and provide images for this writeup. 
+In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 111, and saved the output in order to be able to tune the code later and provide images for this writeup. 
 
 Original image in following processing examples:
 ![alt text][original]  
@@ -77,26 +77,24 @@ Undistorted:
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used both sobel thresholds (function begins on line 74) and color thresholds (function begins on line 154) to generate a binary image (thresholding steps at lines 220 through 225 in `video_processor.py`).  Here's an example of my output for this step.
+I used both sobel thresholds (function begins on line 33) and color thresholds (function begins on line 62) to generate a binary image (thresholding steps at lines 114 through 119 in `video_processor.py`).  Here's an example of my output for this step.
 
 ![alt text][binary]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform occurs in lines 232 through 249 in the file `video_processor.py`. I somewhat programmatically determined a trapezoid to use for the source rectangle on the image to warp, in lines 233 through 236. While this didn't yield as potentially perfect a result as hardcoding the points likely would have, as long as the trapezoid din't appear to be too far off of any one given road, this approach seemed more conducive to allowing the code to adapt to several different types of roads which the car may encounter. 
+The code for my perspective transform occurs in lines 122 through 130 in the file `video_processor.py`. While I initially tried to work with the somewhat programmatically determined trapezoid shape discussed in the walkthrough, I found during tuning that using hardcoded values, like what was noted in the class content worked much better for this video. 
 
-The destination was selected using an offset percentage, and then was subtracted from the image width where necessary in lines 242 through 245. 
-
-This resulted in the following source and destination points, programmatically:
+After several rounds of trial and error, I settled on the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
+| 590, 460      | 320, 0        | 
+| 205, 720      | 320, 720      |
 | 1127, 720     | 960, 720      |
 | 695, 460      | 960, 0        |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image, although I did not retain these images from preprocessing.
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image, although unfortunately I later accidentally overwrote the directory where I kept those particular images and thus did not retain them from preprocessing.
 
 However, I did save out the warped images themselves and show and example here, and used the appearance of the lane lines in these transforms and the appearance of noise to tune the offset and trapezoid measurement numbers to maximize bold lines and the least amount of noise in the transformed pictures in my sample images:
 
@@ -104,7 +102,7 @@ However, I did save out the warped images themselves and show and example here, 
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-I used the one-dimensional convolution method noted in the class content and walkthrough video to find my lane lines, as it was a technique I hadn't tried before (I used histograms in past work with audio for event detection and timbre analysis). This code starts in video_processor.py line 255 through 303, and the Tracker class (used in the place of the suggested 'line' class for storing line attributes) in tracker.py. I tuned the height and width of the convolution window to find the lines, and then used a tracker object to return the curve centers (image_preprocessing.py, line 258). I then used the curve centers to find the window centroids of my warped image (image_preprocessing.py line 264, and tracker.py line 26 through 60). With those found, the window mask was used in order to be able to draw those areas on the image, and that's shown in video_processor.py lines 272 through 283, and the boxed lines were drawn onto the warped image. I didn't consistently use this view in tuning, but it was a helpful visualization to show how the convolution window height and width, along with other noise in the warp image, contributed to the video outcomes. 
+I used the one-dimensional convolution method noted in the class content and walkthrough video to find my lane lines, as it was a technique I hadn't tried before (I used histograms in past work with audio for event detection and timbre analysis). This code starts in video_processor.py line 134 through 183, and the Tracker class (used in the place of the suggested 'line' class for storing line attributes) in tracker.py. I tuned the height and width of the convolution window to find the lines, and then used a tracker object to return the curve centers (image_preprocessing.py, line 134). I then used the curve centers to find the window centroids of my warped image (video_processor.py line 141, and tracker.py line 26 through 60). With those found, the window mask was used in order to be able to draw those areas on the image, and that's shown in video_processor.py lines 149 through 163, and the boxed lines were drawn onto the warped image. I didn't consistently use this view in tuning, but it was a helpful visualization to show how the convolution window height and width, along with other noise in the warp image, contributed to the video outcomes. 
 
 ![alt text][warped_boxes]
 
