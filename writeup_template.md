@@ -118,11 +118,11 @@ From there, I was able to draw the lines back on the road
   
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I did this in lines 323 through 330 in my code in `image_processing.py`. First, the x and y meters per pixel were obtained from the Tracker's curve centers object, the lines were fit to the lane line boundary values found to draw the previous example picture. The curve radius was then calculated for each line. 
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in lines 305 through 345 in my code in `image_processing.py`- I filled in the lane with green, and then added the radius of curvature and center lane information.  Here is an example of my result on a test image, and note that this was captured during tuning... the radius of curvature overlapping text was fixed as a result of seeing this image, as you will see in the video:
 
 ![alt text][image6]
 
