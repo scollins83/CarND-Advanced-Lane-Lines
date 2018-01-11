@@ -28,8 +28,8 @@ The goals / steps of this project are the following:
 [warp_boxes]: ./test_images/tracked_3_overlay.jpg "Warp Lines Highlighted"
 [lines_only]: ./test_images/tracked_3_road.jpg "Road lines only"
 [lines_on_road]: ./test_images/tracked_3_road_round3.jpg "Lines on Road"
-[image6]: ./examples/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
+[image_on_road]: ./tuning_images/video_output_image.jpg "Output"
+[video]: ./project_output_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -65,7 +65,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][undistorted_calibration_image]
 
-For the remaineder of the code, I switched to the video_processor.py script, and again, the driver is in the default main method starting at line 234, and the main image processing is wrapped in a function that begins on line 101. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor quite a few things during tuning and then tuned the input parameters. 
+For the remaineder of the code, I switched to the video_processor.py script, and again, the driver is in the default main method starting at line 243, and the main image processing is wrapped in a function that begins on line 101. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor quite a few things during tuning and then tuned the input parameters. 
 
 In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 111, and saved the output in order to be able to tune the code later and provide images for this writeup. 
 
@@ -106,7 +106,7 @@ I used the one-dimensional convolution method noted in the class content and wal
 
 ![alt text][warped_boxes]
 
-In order to actually get bona-fide lane lines from those convolutions, I used the numpy polyfit function to fit the left and right lanes to a 2nd degree polynomial (I did also explore what other orders of polynomials would do during tuning, but those results obviously weren't great). 
+In order to actually get bona-fide lane lines from those convolutions, I used the numpy polyfit function to fit the left and right lanes to a 2nd degree polynomial (I did also explore what other orders of polynomials would do during tuning, but those results obviously weren't great). This code is in video_processor.py lines 174 through 183. 
 
 After finding those lines, clear lines could be obtained.  
 ![alt text][lines_only]  
@@ -116,13 +116,13 @@ From there, I was able to draw the lines back on the road
   
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines 323 through 330 in my code in `video_processor.py`. First, the x and y meters per pixel were obtained from the Tracker's curve centers object, the lines were fit to the lane line boundary values found to draw the previous example picture. The curve radius was then calculated for each line. 
+I did this in lines 212 through 225 in my code in `video_processor.py`. First, the x and y meters per pixel were obtained from the Tracker's curve centers object, the lines were fit to the lane line boundary values found to draw the previous example picture. The curve radius was then calculated for each line. 
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines 305 through 345 in my code in `video_processor.py`- I filled in the lane with green, and then added the radius of curvature and center lane information.  Here is an example of my result on a test image, and note that this was captured during tuning... the radius of curvature overlapping text was fixed as a result of seeing this image, as you will see in the video:
+I implemented this step in lines 185 through 238 in my code in `video_processor.py`- I filled in the lane with green, and then added the radius of curvature and center lane information.  Here is an example of my result on a test image, and note that this was captured during tuning... the radius of curvature overlapping text was fixed as a result of seeing this image, as you will see in the video:
 
-![alt text][image6]
+![alt text][image_on_road]
 
 ---
 
@@ -138,4 +138,4 @@ Here's a [link to my video result](./project_output_video.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+I'm noticing that if there are shadows or any imperfections in the left yellow line, the video seems to skip and make the curve larger than it should be. While I reduced it in the current codebase through trial and error, in the future to try to combat this, I would try other color combinations to see if I could clean up the video at all. Also, I would maybe explore some of the items from our first lane lines project which treated lines color agnostically and apply them to this project as well. I noticed when I tried to apply the current pipeline to the challenge video, writing on the pavement and interruptions in the left line DID cause the pipeline to fail, so again, I would try to pick out parallel lines to start, maybe try something other than the one-dimensional convolutional method to see if other approaches get better results, and borrow some things from the first lane lines lesson to try to get the pipeline to ignore painted writing on the road. 
