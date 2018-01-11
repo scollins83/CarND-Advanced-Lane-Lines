@@ -212,10 +212,17 @@ def process_image(img):
     ym_per_pix = curve_centers.ym_per_pix
     xm_per_pix = curve_centers.xm_per_pix
 
-    curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32) * ym_per_pix,
-                              np.array(leftx, np.float32) * xm_per_pix, 2)
-    curverad = ((1 + (2 * curve_fit_cr[0] * yvals[-1] * ym_per_pix + curve_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
-        2 * curve_fit_cr[0])
+    left_curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32) * ym_per_pix,
+                                   np.array(leftx, np.float32) * xm_per_pix, 2)
+    left_curverad = ((1 + (
+            2 * left_curve_fit_cr[0] * yvals[-1] * ym_per_pix + left_curve_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
+        2 * left_curve_fit_cr[0])
+
+    right_curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32) * ym_per_pix,
+                                    np.array(rightx, np.float32) * xm_per_pix, 2)
+    right_curverad = ((1 + (
+            2 * right_curve_fit_cr[0] * yvals[-1] * ym_per_pix + right_curve_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
+        2 * right_curve_fit_cr[0])
 
     camera_center = (left_fitx[-1] + right_fitx[-1]) / 2
     center_diff = (camera_center - warped.shape[1] / 2) * xm_per_pix
@@ -223,9 +230,11 @@ def process_image(img):
     if center_diff <= 0:
         side_pos = 'right'
 
-    cv2.putText(result, 'Radius of curvature = ' + str(round(curverad, 3)) + '(m)', (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                1, (255, 255, 255), 2)
-    cv2.putText(result, "Vehicle is " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center', (50, 100),
+    cv2.putText(result, 'Left radius of curvature = ' + str(round(left_curverad, 3)) + '(m)', (50, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv2.putText(result, 'Right radius of curvature = ' + str(round(right_curverad, 3)) + '(m)', (50, 100),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv2.putText(result, "Vehicle is " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center', (50, 150),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     return result
