@@ -235,28 +235,18 @@ def process_image(img):
 
     # Set up Perspective Transform Area
     img_size = (img.shape[1], img.shape[0])
-    bot_width = config['pt_bottom_width']  # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
-    mid_width = config['pt_middle_width']  # Percent of middle trapezoid height
-    height_pct = config['pt_height_percent']  # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
-    bottom_trim = config['pt_bottom_trim']  # Percent from top to bottom to avoid car hood
-    #src = np.float32([[img.shape[1] * (.5 - mid_width / 2), img.shape[0] * height_pct],
-    #                  [img.shape[1] * (.5 + mid_width / 2), img.shape[0] * height_pct],
-    #                  [img.shape[1] * (.5 - bot_width / 2), img.shape[0] * bottom_trim],
-    #                  [img.shape[1] * (.5 + bot_width / 2), img.shape[0] * bottom_trim]])
+
     src = np.float32([[590, 460], [205, 720], [1127, 720], [695, 460]])
-    offset = img_size[0] * config['pt_offset']
-    #dst = np.float32([[offset, 0],
-    #                  [img_size[0] - offset, 0],
-    #                  [offset, img_size[1]],
-    #                  [img_size[0] - offset, img_size[1]]])
+
     dst = np.float32([[320, 0], [320, 720], [960, 720], [960, 0]])
+
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
     warped = cv2.warpPerspective(preprocessed_image, M, img_size, flags=cv2.INTER_LINEAR)
 
     # Set up the overall class to do all the tracking
-    window_width = config['conv_window_width']  # Play with these; Switched to 25 so it wouldn't get lost in thicker lines.
-    window_height = config['conv_window_height'] # 70
+    window_width = config['conv_window_width']
+    window_height = config['conv_window_height']
 
     curve_centers = Tracker(window_width=window_width, window_height=window_height,
                             margin=config['tracker_margin'],
@@ -264,7 +254,8 @@ def process_image(img):
                             xm=config['tracker_xm_numerator'] / config['tracker_xm_denominator'],
                             smooth_factor=config['tracker_smoothing_factor'])
 
-    window_centroids = curve_centers.find_window_centroids(warped)  # Gives us center point to draw lane lines
+    # Finds center points of windows to use to draw lane lines.
+    window_centroids = curve_centers.find_window_centroids(warped)
 
     l_points = np.zeros_like(warped)
     r_points = np.zeros_like(warped)
