@@ -230,19 +230,9 @@ if __name__ == "__main__":
 
         # Set up Perspective Transform Area
         img_size = (img.shape[1], img.shape[0])
-        bot_width = config['pt_bottom_width'] # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
-        mid_width = config['pt_middle_width'] # Percent of middle trapezoid height
-        height_pct = config['pt_height_percent'] # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
-        bottom_trim = config['pt_bottom_trim'] # Percent from top to bottom to avoid car hood
-        src = np.float32([[img.shape[1]*(.5-mid_width/2), img.shape[0]*height_pct],
-                          [img.shape[1]*(.5+mid_width/2), img.shape[0]*height_pct],
-                          [img.shape[1]*(.5-bot_width/2), img.shape[0]*bottom_trim],
-                          [img.shape[1]*(.5+bot_width/2), img.shape[0]*bottom_trim]])
-        offset = img_size[0] * config['pt_offset']
-        dst = np.float32([[offset, 0],
-                          [img_size[0]-offset, 0],
-                          [offset, img_size[1]],
-                          [img_size[0]-offset, img_size[1]]])
+        # Set up source and destination coordinates for transform.
+        src = np.float32([[590, 460], [205, 720], [1195, 720], [760, 460]])
+        dst = np.float32([[250, 0], [250, 720], [1000, 720], [1000, 0]])
 
         M = cv2.getPerspectiveTransform(src, dst)
         Minv = cv2.getPerspectiveTransform(dst, src)

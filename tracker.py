@@ -43,7 +43,6 @@ class Tracker():
 
         for level in range(1, (int)(warped.shape[0]/window_height)):
             image_layer = np.sum(warped[int(warped.shape[0]-(level+1)*window_height):int(warped.shape[0]-level*window_height),:], axis=0)
-            print()
             conv_signal = np.convolve(window, image_layer)
 
             offset = window_width/2
