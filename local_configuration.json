@@ -11,9 +11,9 @@
   "input_video": "project_video.mp4",
   "sobel_x_min": 20,
   "sobel_x_max": 100,
-  "sobel_y_min": 20,
+  "sobel_y_min": 60,
   "sobel_y_max": 100,
-  "color_s_thresh_min": 170,
+  "color_s_thresh_min": 150,
   "color_s_thresh_max": 255,
   "color_v_thresh_min": 50,
   "color_v_thresh_max": 255,
@@ -24,5 +24,5 @@
   "tracker_ym_denominator": 795,
   "tracker_xm_numerator": 3.7,
   "tracker_xm_denominator": 250,
-  "tracker_smoothing_factor": 15
+  "tracker_smoothing_factor": 30
 }

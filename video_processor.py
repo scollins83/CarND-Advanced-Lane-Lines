@@ -122,8 +122,8 @@ def process_image(img):
     img_size = (img.shape[1], img.shape[0])
 
     # Set up source and destination coordinates for transform.
-    src = np.float32([[540, 490], [200, 720], [1180, 720], [795, 490]])
-    dst = np.float32([[250, 0], [250, 720], [1000, 720], [1000, 0]])
+    src = np.float32([[540, 480], [200, 720], [1180, 720], [795, 480]])
+    dst = np.float32([[200, 0], [200, 720], [1050, 720], [1050, 0]])
 
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)

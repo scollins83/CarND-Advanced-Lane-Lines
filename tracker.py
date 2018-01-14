@@ -47,7 +47,10 @@ class Tracker():
 
             offset = window_width/2
             l_min_index = int(min(l_center+offset-margin, 0)) # Padding and margin for allowing window to slide around
+            l_min_index = int(max(l_min_index, 0))
+
             l_max_index = int(max(l_center+offset-margin, warped.shape[1]))
+
             l_center = np.argmax(conv_signal[l_min_index:l_max_index])+l_min_index-offset
 
             r_min_index = int(max(r_center+offset-margin, 0))
