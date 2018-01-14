@@ -23,7 +23,7 @@ The goals / steps of this project are the following:
 [warped]: ./tuning_images/resub_1_2_warped.jpg "Warp Example"
 [warp_boxes]: ./tuning_images/resub_1_2_overlay.jpg "Warp Lines Highlighted"
 [lines_only]: ./tuning_images/resub_1_2_road.jpg "Road lines only"
-[lines_on_road]: ./test_images/resub_1_2_lines_on_road.jpg "Lines on Road"
+[lines_on_road]: ./tuning_images/resub_1_2_lines_on_road.jpg "Lines on Road"
 [image_on_road]: ./tuning_images/resub_1_2_road_round4.jpg "Output"
 [video]: ./project_output_video.mp4 "Video"
 
