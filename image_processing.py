@@ -220,7 +220,9 @@ if __name__ == "__main__":
         grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
         c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
                                    vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
-        preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
+        mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
+        dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
+        preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1) | (mag_binary == 1) | (dir_binary == 1))] = 255
         # Lots of experimentation to how to get the best binary images
 
         write_name = config['tracked_save_pattern'] + str(index) + '_binary.jpg'
@@ -229,8 +231,15 @@ if __name__ == "__main__":
         # Set up Perspective Transform Area
         img_size = (img.shape[1], img.shape[0])
         # Set up source and destination coordinates for transform.
-        src = np.float32([[540, 480], [200, 720], [1180, 720], [795, 480]])
-        dst = np.float32([[200, 0], [200, 720], [1050, 720], [1050, 0]])
+        src = np.float32([[config['src_0_x'], config['src_0_y']],
+                          [config['src_1_x'], config['src_1_y']],
+                          [config['src_2_x'], config['src_2_y']],
+                          [config['src_3_x'], config['src_3_y']]])
+        dst = np.float32([[config['dst_0_x'], config['dst_0_y']],
+                          [config['dst_1_x'], config['dst_1_y']],
+                          [config['dst_2_x'], config['dst_2_y']],
+                          [config['dst_3_x'], config['dst_3_y']]])
+
 
         M = cv2.getPerspectiveTransform(src, dst)
         Minv = cv2.getPerspectiveTransform(dst, src)

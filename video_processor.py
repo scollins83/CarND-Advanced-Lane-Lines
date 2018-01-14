@@ -59,6 +59,56 @@ def abs_sobel_thresh(img, orient='x', thresh_min=0, thresh_max=255):
     return binary_output
 
 
+def mag_thresh(img, sobel_kernel=3, mag_thresh=(0, 255)):
+    """
+    Returns the magnitude of the gradient # for a given sobel kernel size and threshold values
+
+    :param img:
+    :param sobel_kernel:
+    :param mag_thresh:
+    :return:
+    """
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    # Take both Sobel x and y gradients
+    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
+    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
+    # Calculate the gradient magnitude
+    gradmag = np.sqrt(sobelx**2 + sobely**2)
+    # Rescale to 8 bit
+    scale_factor = np.max(gradmag)/255
+    gradmag = (gradmag/scale_factor).astype(np.uint8)
+    # Create a binary image of ones where threshold is met, zeros otherwise
+    binary_output = np.zeros_like(gradmag)
+    binary_output[(gradmag >= mag_thresh[0]) & (gradmag <= mag_thresh[1])] = 1
+
+    # Return the binary image
+    return binary_output
+
+
+def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
+    """
+    Thresholds an image for a given range and Sobel kernel
+    :param img:
+    :param sobel_kernel:
+    :param thresh:
+    :return:
+    """
+    # Grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    # Calculate the x and y gradients
+    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
+    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
+    # Take the absolute value of the gradient direction,
+    # apply a threshold, and create a binary image result
+    absgraddir = np.arctan2(np.absolute(sobely), np.absolute(sobelx))
+    binary_output =  np.zeros_like(absgraddir)
+    binary_output[(absgraddir >= thresh[0]) & (absgraddir <= thresh[1])] = 1
+
+    # Return the binary image
+    return binary_output
+
+
 def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
     """
     Combination of the HSV and HLS colorspace thresholds
@@ -116,14 +166,23 @@ def process_image(img):
     grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
     c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
                                vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
-    preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
+    mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
+    dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
+    preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1) | (mag_binary == 1) | (dir_binary == 1))] = 255
+    # Lots of experimentation to how to get the best binary images
 
     # Set up Perspective Transform Area
     img_size = (img.shape[1], img.shape[0])
 
     # Set up source and destination coordinates for transform.
-    src = np.float32([[540, 480], [200, 720], [1180, 720], [795, 480]])
-    dst = np.float32([[200, 0], [200, 720], [1050, 720], [1050, 0]])
+    src = np.float32([[config['src_0_x'], config['src_0_y']],
+                      [config['src_1_x'], config['src_1_y']],
+                      [config['src_2_x'], config['src_2_y']],
+                      [config['src_3_x'], config['src_3_y']]])
+    dst = np.float32([[config['dst_0_x'], config['dst_0_y']],
+                      [config['dst_1_x'], config['dst_1_y']],
+                      [config['dst_2_x'], config['dst_2_y']],
+                      [config['dst_3_x'], config['dst_3_y']]])
 
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
