@@ -30,7 +30,7 @@
   "tracker_ym_denominator": 795,
   "tracker_xm_numerator": 3.7,
   "tracker_xm_denominator": 250,
-  "tracker_smoothing_factor": 20,
+  "tracker_smoothing_factor": 15,
   "src_0_x": 540,
   "src_0_y": 470,
   "src_1_x": 200,
