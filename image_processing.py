@@ -291,6 +291,8 @@ if __name__ == "__main__":
         warpage = np.array(cv2.merge((warped, warped, warped)), np.uint8)
 
         result = cv2.addWeighted(warpage, 1, template, 0.5, 0.0) # Overlay the original road img with window results; not showing up.
+        write_name = config['tracked_save_pattern'] + str(index) + '_overlay.jpg'
+        cv2.imwrite(write_name, result)
 
         # Fit lane boundaries to left, right, center positions found
         yvals = range(0, warped.shape[0])
@@ -313,6 +315,10 @@ if __name__ == "__main__":
         road_bkg = np.zeros_like(img)
         cv2.fillPoly(road, [left_lane], color=[255, 0, 0])
         cv2.fillPoly(road, [right_lane], color=[0, 0, 255])
+
+        write_name = config['tracked_save_pattern'] + str(index) + '_road.jpg'
+        cv2.imwrite(write_name, road)
+
         cv2.fillPoly(road, [middle_marker], color=[0, 255, 0])
         cv2.fillPoly(road_bkg, [left_lane], color=[255, 255, 255])
         cv2.fillPoly(road_bkg, [right_lane], color=[255, 255, 255])
