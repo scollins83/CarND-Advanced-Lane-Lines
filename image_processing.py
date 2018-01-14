@@ -151,7 +151,7 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     return binary_output
 
 # Combination for HSV and HLS color_threshold
-def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
+def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255), lthresh=(0, 255)):
     """
     Combines HSV and HLS
     :param image:
@@ -159,10 +159,15 @@ def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
     :param vthresh:
     :return:
     """
+
     hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
     s_channel = hls[:, :, 2]
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= sthresh[0]) & (s_channel <= sthresh[1])] = 1
+
+    l_channel = hls[:, :, 1]
+    l_binary = np.zeros_like(l_channel)
+    l_binary[(l_channel >= lthresh[0]) & (l_channel <= lthresh[1])] = 1
 
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     v_channel = hsv[:, :, 2]
@@ -170,7 +175,7 @@ def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
     v_binary[(v_channel >= vthresh[0]) & (v_channel <= vthresh[1])] = 1
 
     output = np.zeros_like(s_channel)
-    output[(s_binary == 1) & (v_binary == 1)] = 1
+    output[(s_binary == 1) & (v_binary == 1) & (l_binary == 1)] = 1
     return output
 
 
@@ -190,9 +195,6 @@ def window_mask(width, height, img_ref, center, level):
 
 
 if __name__ == "__main__":
-
-    # Set TensorFlow logging so it isn't so verbose.
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     # Load the necessary parameters
     args = lfc.parse_args(sys.argv[1:])
@@ -221,7 +223,10 @@ if __name__ == "__main__":
         gradx = abs_sobel_thresh(img, orient='x', thresh_min=config['sobel_x_min'], thresh_max=config['sobel_x_max'])
         grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
         c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
-                                   vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
+                                   vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']),
+                                   lthresh=(config['color_l_thresh_min'], config['color_l_thresh_max']))
+        #mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
+        #dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
         preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
         # Lots of experimentation to how to get the best binary images
 
@@ -230,19 +235,16 @@ if __name__ == "__main__":
 
         # Set up Perspective Transform Area
         img_size = (img.shape[1], img.shape[0])
-        bot_width = config['pt_bottom_width'] # Percent of bottom trapezoid height    # EXPERIMENT FOR THESE VALUES
-        mid_width = config['pt_middle_width'] # Percent of middle trapezoid height
-        height_pct = config['pt_height_percent'] # Percent for trapezoid height for how far we look ahead - Controls how far from top to bottom
-        bottom_trim = config['pt_bottom_trim'] # Percent from top to bottom to avoid car hood
-        src = np.float32([[img.shape[1]*(.5-mid_width/2), img.shape[0]*height_pct],
-                          [img.shape[1]*(.5+mid_width/2), img.shape[0]*height_pct],
-                          [img.shape[1]*(.5-bot_width/2), img.shape[0]*bottom_trim],
-                          [img.shape[1]*(.5+bot_width/2), img.shape[0]*bottom_trim]])
-        offset = img_size[0] * config['pt_offset']
-        dst = np.float32([[offset, 0],
-                          [img_size[0]-offset, 0],
-                          [offset, img_size[1]],
-                          [img_size[0]-offset, img_size[1]]])
+        # Set up source and destination coordinates for transform.
+        src = np.float32([[config['src_0_x'], config['src_0_y']],
+                          [config['src_1_x'], config['src_1_y']],
+                          [config['src_2_x'], config['src_2_y']],
+                          [config['src_3_x'], config['src_3_y']]])
+        dst = np.float32([[config['dst_0_x'], config['dst_0_y']],
+                          [config['dst_1_x'], config['dst_1_y']],
+                          [config['dst_2_x'], config['dst_2_y']],
+                          [config['dst_3_x'], config['dst_3_y']]])
+
 
         M = cv2.getPerspectiveTransform(src, dst)
         Minv = cv2.getPerspectiveTransform(dst, src)
@@ -289,6 +291,8 @@ if __name__ == "__main__":
         warpage = np.array(cv2.merge((warped, warped, warped)), np.uint8)
 
         result = cv2.addWeighted(warpage, 1, template, 0.5, 0.0) # Overlay the original road img with window results; not showing up.
+        write_name = config['tracked_save_pattern'] + str(index) + '_overlay.jpg'
+        cv2.imwrite(write_name, result)
 
         # Fit lane boundaries to left, right, center positions found
         yvals = range(0, warped.shape[0])
@@ -302,6 +306,7 @@ if __name__ == "__main__":
         right_fitx = right_fit[0]*yvals*yvals + right_fit[1]*yvals + right_fit[2]
         right_fitx = np.array(right_fitx, np.int32)
 
+
         left_lane = np.array(list(zip(np.concatenate((left_fitx-window_width/2, left_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))),np.int32)
         right_lane = np.array(list(zip(np.concatenate((right_fitx-window_width/2, right_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)
         middle_marker = np.array(list(zip(np.concatenate((left_fitx+window_width/2,right_fitx[::-1]-window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)
@@ -310,6 +315,10 @@ if __name__ == "__main__":
         road_bkg = np.zeros_like(img)
         cv2.fillPoly(road, [left_lane], color=[255, 0, 0])
         cv2.fillPoly(road, [right_lane], color=[0, 0, 255])
+
+        write_name = config['tracked_save_pattern'] + str(index) + '_road.jpg'
+        cv2.imwrite(write_name, road)
+
         cv2.fillPoly(road, [middle_marker], color=[0, 255, 0])
         cv2.fillPoly(road_bkg, [left_lane], color=[255, 255, 255])
         cv2.fillPoly(road_bkg, [right_lane], color=[255, 255, 255])

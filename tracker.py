@@ -43,12 +43,14 @@ class Tracker():
 
         for level in range(1, (int)(warped.shape[0]/window_height)):
             image_layer = np.sum(warped[int(warped.shape[0]-(level+1)*window_height):int(warped.shape[0]-level*window_height),:], axis=0)
-            print()
             conv_signal = np.convolve(window, image_layer)
 
             offset = window_width/2
             l_min_index = int(min(l_center+offset-margin, 0)) # Padding and margin for allowing window to slide around
+            l_min_index = int(max(l_min_index, 0))
+
             l_max_index = int(max(l_center+offset-margin, warped.shape[1]))
+
             l_center = np.argmax(conv_signal[l_min_index:l_max_index])+l_min_index-offset
 
             r_min_index = int(max(r_center+offset-margin, 0))
