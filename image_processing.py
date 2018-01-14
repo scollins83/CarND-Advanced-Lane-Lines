@@ -159,6 +159,7 @@ def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
     :param vthresh:
     :return:
     """
+
     hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
     s_channel = hls[:, :, 2]
     s_binary = np.zeros_like(s_channel)
@@ -190,9 +191,6 @@ def window_mask(width, height, img_ref, center, level):
 
 
 if __name__ == "__main__":
-
-    # Set TensorFlow logging so it isn't so verbose.
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     # Load the necessary parameters
     args = lfc.parse_args(sys.argv[1:])
@@ -231,7 +229,7 @@ if __name__ == "__main__":
         # Set up Perspective Transform Area
         img_size = (img.shape[1], img.shape[0])
         # Set up source and destination coordinates for transform.
-        src = np.float32([[590, 460], [205, 720], [1195, 720], [760, 460]])
+        src = np.float32([[540, 490], [200, 720], [1180, 720], [795, 490]])
         dst = np.float32([[250, 0], [250, 720], [1000, 720], [1000, 0]])
 
         M = cv2.getPerspectiveTransform(src, dst)
@@ -291,6 +289,7 @@ if __name__ == "__main__":
         right_fit = np.polyfit(res_yvals, rightx, 2)
         right_fitx = right_fit[0]*yvals*yvals + right_fit[1]*yvals + right_fit[2]
         right_fitx = np.array(right_fitx, np.int32)
+
 
         left_lane = np.array(list(zip(np.concatenate((left_fitx-window_width/2, left_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))),np.int32)
         right_lane = np.array(list(zip(np.concatenate((right_fitx-window_width/2, right_fitx[::-1]+window_width/2), axis=0), np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)

@@ -122,9 +122,9 @@ def process_image(img):
     img_size = (img.shape[1], img.shape[0])
 
     # Set up source and destination coordinates for transform.
-    src = np.float32([[590, 460], [205, 720], [1195, 720], [760, 460]])
-    #dst = np.float32([[320, 0], [320, 720], [960, 720], [960, 0]])
+    src = np.float32([[540, 490], [200, 720], [1180, 720], [795, 490]])
     dst = np.float32([[250, 0], [250, 720], [1000, 720], [1000, 0]])
+
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
     warped = cv2.warpPerspective(preprocessed_image, M, img_size, flags=cv2.INTER_LINEAR)
