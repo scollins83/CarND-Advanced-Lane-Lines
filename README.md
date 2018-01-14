@@ -17,14 +17,14 @@ The goals / steps of this project are the following:
 
 [original_calibration_image]: ./test/unit_tests/test_image.png "Original calibration image"
 [undistorted_calibration_image]: ./test/unit_tests/und_image.png "Undistorted"
-[undistorted]: ./tuning_images/run4_3_undistorted.jpg "Undistorted road"
-[original]: ./test_images/tracked_3.jpg "Original road"
-[binary]: ./tuning_images/run4_3_binary.jpg "Binary Example"
-[warped]: ./tuning_images/run4_3_warped.jpg "Warp Example"
+[undistorted]: ./tuning_images/resub_1_2_undistorted.jpg "Undistorted road"
+[original]: ./test_images/test4.jpg "Original road"
+[binary]: ./tuning_images/resub_1_2_binary.jpg "Binary Example"
+[warped]: ./tuning_images/resub_1_2_warped.jpg "Warp Example"
 [warp_boxes]: ./test_images/tracked_3_overlay.jpg "Warp Lines Highlighted"
 [lines_only]: ./test_images/tracked_3_road.jpg "Road lines only"
 [lines_on_road]: ./test_images/tracked_3_road_round3.jpg "Lines on Road"
-[image_on_road]: ./tuning_images/video_output_image.jpg "Output"
+[image_on_road]: ./tuning_images/resub_1_2_road_round4.jpg "Output"
 [video]: ./project_output_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
