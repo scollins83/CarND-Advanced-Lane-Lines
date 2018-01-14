@@ -151,7 +151,7 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     return binary_output
 
 # Combination for HSV and HLS color_threshold
-def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
+def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255), lthresh=(0, 255)):
     """
     Combines HSV and HLS
     :param image:
@@ -165,13 +165,17 @@ def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255)):
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= sthresh[0]) & (s_channel <= sthresh[1])] = 1
 
+    l_channel = hls[:, :, 1]
+    l_binary = np.zeros_like(l_channel)
+    l_binary[(l_channel >= lthresh[0]) & (l_channel <= lthresh[1])] = 1
+
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     v_channel = hsv[:, :, 2]
     v_binary = np.zeros_like(v_channel)
     v_binary[(v_channel >= vthresh[0]) & (v_channel <= vthresh[1])] = 1
 
     output = np.zeros_like(s_channel)
-    output[(s_binary == 1) & (v_binary == 1)] = 1
+    output[(s_binary == 1) & (v_binary == 1) & (l_binary == 1)] = 1
     return output
 
 
@@ -219,7 +223,8 @@ if __name__ == "__main__":
         gradx = abs_sobel_thresh(img, orient='x', thresh_min=config['sobel_x_min'], thresh_max=config['sobel_x_max'])
         grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
         c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
-                                   vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
+                                   vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']),
+                                   lthresh=(config['color_l_thresh_min'], config['color_l_thresh_max']))
         #mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
         #dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
         preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
