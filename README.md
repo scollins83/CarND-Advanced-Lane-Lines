@@ -21,9 +21,9 @@ The goals / steps of this project are the following:
 [original]: ./test_images/test4.jpg "Original road"
 [binary]: ./tuning_images/resub_1_2_binary.jpg "Binary Example"
 [warped]: ./tuning_images/resub_1_2_warped.jpg "Warp Example"
-[warp_boxes]: ./test_images/tracked_3_overlay.jpg "Warp Lines Highlighted"
-[lines_only]: ./test_images/tracked_3_road.jpg "Road lines only"
-[lines_on_road]: ./test_images/tracked_3_road_round3.jpg "Lines on Road"
+[warp_boxes]: ./tuning_images/resub_1_2_overlay.jpg "Warp Lines Highlighted"
+[lines_only]: ./tuning_images/resub_1_2_road.jpg "Road lines only"
+[lines_on_road]: ./test_images/resub_1_2_lines_on_road.jpg "Lines on Road"
 [image_on_road]: ./tuning_images/resub_1_2_road_round4.jpg "Output"
 [video]: ./project_output_video.mp4 "Video"
 
