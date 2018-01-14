@@ -220,9 +220,9 @@ if __name__ == "__main__":
         grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
         c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
                                    vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']))
-        mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
-        dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
-        preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1) | (mag_binary == 1) | (dir_binary == 1))] = 255
+        #mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
+        #dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
+        preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
         # Lots of experimentation to how to get the best binary images
 
         write_name = config['tracked_save_pattern'] + str(index) + '_binary.jpg'
