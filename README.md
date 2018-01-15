@@ -1,6 +1,11 @@
 # **Advanced Lane Finding Project**
 
-### Sara Collins
+### Sara Collins  
+  
+  
+##### To generate video: 
+1) Fill out desired parameters in `local_configuration.json`, or else copy that file and supply other parameters.
+2) Run `python video_processor.py -c local_configuration.json`
 
 The goals / steps of this project are the following:
 

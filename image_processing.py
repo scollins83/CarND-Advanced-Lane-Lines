@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import pickle
 from tracker import Tracker
+import time
 from moviepy.editor import VideoFileClip   # 1:10:00
 from IPython.display import HTML
 
@@ -151,7 +152,8 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     return binary_output
 
 # Combination for HSV and HLS color_threshold
-def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255), lthresh=(0, 255)):
+def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255), lthresh=(0, 255),
+                    vlthresh=(0, 255), ythresh=(0, 255)):
     """
     Combines HSV and HLS
     :param image:
@@ -165,17 +167,27 @@ def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255), lthresh=(0, 255))
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= sthresh[0]) & (s_channel <= sthresh[1])] = 1
 
-    l_channel = hls[:, :, 1]
+    luv = cv2.cvtColor(image, cv2.COLOR_RGB2LUV)
+    l_channel = luv[:, :, 0]
     l_binary = np.zeros_like(l_channel)
     l_binary[(l_channel >= lthresh[0]) & (l_channel <= lthresh[1])] = 1
+
+    vl_channel = luv[:, :, 2]
+    vl_binary = np.zeros_like(vl_channel)
+    vl_binary[(vl_channel >= vlthresh[0]) & (vl_channel <= vlthresh[1])] = 1
 
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     v_channel = hsv[:, :, 2]
     v_binary = np.zeros_like(v_channel)
     v_binary[(v_channel >= vthresh[0]) & (v_channel <= vthresh[1])] = 1
 
+    yuv = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+    y_channel = yuv[:, :, 0]
+    y_binary = np.zeros_like(y_channel)
+    y_binary[(y_channel >= ythresh[0]) & (y_channel <= ythresh[1])] = 1
+
     output = np.zeros_like(s_channel)
-    output[(s_binary == 1) & (v_binary == 1) & (l_binary == 1)] = 1
+    output[(((s_binary == 1) & (v_binary == 1)) & ((l_binary == 1) | (vl_binary == 1))) | (y_binary == 1)] = 1
     return output
 
 
@@ -224,9 +236,10 @@ if __name__ == "__main__":
         grady = abs_sobel_thresh(img, orient='y', thresh_min=config['sobel_y_min'], thresh_max=config['sobel_y_max'])
         c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
                                    vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']),
-                                   lthresh=(config['color_l_thresh_min'], config['color_l_thresh_max']))
-        #mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
-        #dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
+                                   lthresh=(config['color_l_thresh_min'], config['color_l_thresh_max']),
+                                   vlthresh=(config['color_vl_thresh_min'], config['color_vl_thresh_max']),
+                                   ythresh=(config['color_y_thresh_min'], config['color_y_thresh_max']))
+
         preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
         # Lots of experimentation to how to get the best binary images
 
