@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import pickle
 from tracker import Tracker
+import time
 from moviepy.editor import VideoFileClip   # 1:10:00
 from IPython.display import HTML
 
@@ -225,8 +226,7 @@ if __name__ == "__main__":
         c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
                                    vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']),
                                    lthresh=(config['color_l_thresh_min'], config['color_l_thresh_max']))
-        #mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
-        #dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
+
         preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
         # Lots of experimentation to how to get the best binary images
 

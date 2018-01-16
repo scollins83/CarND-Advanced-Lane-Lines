@@ -9,6 +9,8 @@ import os
 import lane_finding_calibration as lfc
 import logging
 import sys
+import time
+import lane_specification as ls
 
 
 logging.basicConfig(level=logging.INFO)
@@ -136,7 +138,6 @@ def color_threshold(image, sthresh=(0, 255), vthresh=(0, 255), lthresh=(0, 255))
     output[(s_binary == 1) & (v_binary == 1) & (l_binary == 1)] = 1
     return output
 
-
 def window_mask(width, height, img, center, level):
     """
     Mask for drawing window areas for convolutional windows.
@@ -159,8 +160,17 @@ def process_image(img):
     :param img: Image array.
     :return: Processed image.
     """
+
     # Assert that at least a 3-channel image was passed to the function.
     assert img.shape[-1] == 3
+
+    # Increment the global frame_counter
+    global frame_counter
+    #global last_used_frame_index
+    #global lanes
+    global last_lane_used
+
+    current_frame = frame_counter
 
     # Undistort the image.
     img = cv2.undistort(img, matrix, dist, None, matrix)
@@ -172,8 +182,7 @@ def process_image(img):
     c_binary = color_threshold(img, sthresh=(config['color_s_thresh_min'], config['color_s_thresh_max']),
                                vthresh=(config['color_v_thresh_min'], config['color_v_thresh_max']),
                                lthresh = (config['color_l_thresh_min'], config['color_l_thresh_max']))
-    #mag_binary = mag_thresh(img, mag_thresh=(config['mag_thresh_min'], config['mag_thresh_max']))
-    #dir_binary = dir_threshold(img, thresh=(config['dir_thresh_min'], config['dir_thresh_max']))
+
     preprocessed_image[((gradx == 1) & (grady == 1) | (c_binary == 1))] = 255
     # Lots of experimentation to how to get the best binary images
 
@@ -204,6 +213,7 @@ def process_image(img):
 
     # Finds center points of windows to use to draw lane lines.
     window_centroids = curve_centers.find_window_centroids(warped)
+    #logger.info("Number of window centroids: " + str(len(window_centroids)))
 
     l_points = np.zeros_like(warped)
     r_points = np.zeros_like(warped)
@@ -212,6 +222,7 @@ def process_image(img):
     rightx = []
 
     for level in range(0, len(window_centroids)):
+        # Level == Number of boxes to stack to make a line
         # Window mask is function to draw window areas
         # Add center value found in frame to the list of the lane points per left, and right lines
         leftx.append(window_centroids[level][0])
@@ -225,6 +236,8 @@ def process_image(img):
         # Add graphic points from window mask here to total pixels found
         l_points[(l_points == 255) | ((l_mask == 1))] = 255
         r_points[(r_points == 255) | ((r_mask == 1))] = 255
+
+        # If level == 0, and none found, start looking for an escape route.
 
     # Draw the results
     template = np.array(r_points + l_points, np.uint8)
@@ -260,6 +273,56 @@ def process_image(img):
                             right_fitx[::-1] - config['conv_window_width'] / 2), axis=0),
             np.concatenate((yvals, yvals[::-1]), axis=0))), np.int32)
 
+    ym_per_pix = curve_centers.ym_per_pix
+    xm_per_pix = curve_centers.xm_per_pix
+
+    # Turn the lane objects to the list of the lane lines
+    lane = ls.LaneSpecification(config['tracker_xm_denominator'],
+                                left_fit,
+                                left_fitx,
+                                leftx,
+                                left_lane,
+                                right_fit,
+                                right_fitx,
+                                rightx,
+                                right_lane,
+                                middle_marker,
+                                current_frame,
+                                ym_per_pix,
+                                xm_per_pix,
+                                res_yvals)
+
+    if frame_counter == 0:
+        lane.use_lane()
+        last_lane_used = lane
+
+    else:
+        lane.determine_usability(last_lane_used)
+        if lane.all_usable:
+            lane.use_lane()
+            last_lane_used = lane
+            if lane.left_line_replaced:
+                left_lane = lane.left_line
+                middle_marker = lane.middle_marker
+                leftx = lane.leftx
+                ym_per_pix = lane.ym_per_pix
+                xm_per_pix = lane.xm_per_pix
+                res_yvals = lane.res_yvals
+                left_fitx = lane.left_fit_x
+
+        else:
+            left_lane = last_lane_used.left_line
+            right_lane = last_lane_used.right_line
+            middle_marker = last_lane_used.middle_marker
+            leftx = last_lane_used.leftx
+            rightx = last_lane_used.rightx
+            ym_per_pix = last_lane_used.ym_per_pix
+            xm_per_pix = last_lane_used.xm_per_pix
+            res_yvals = last_lane_used.res_yvals
+            right_fitx = lane.right_fit_x
+            left_fitx = lane.left_fit_x
+
+
     road = np.zeros_like(img)
     road_bkg = np.zeros_like(img)
     cv2.fillPoly(road, [left_lane], color=[255, 0, 0])
@@ -274,8 +337,6 @@ def process_image(img):
     base = cv2.addWeighted(img, 1.0, road_warped_bkg, -1.0, 0.0)
     result = cv2.addWeighted(base, 1.0, road_warped, 1.0, 0.0)
 
-    ym_per_pix = curve_centers.ym_per_pix
-    xm_per_pix = curve_centers.xm_per_pix
 
     left_curve_fit_cr = np.polyfit(np.array(res_yvals, np.float32) * ym_per_pix,
                                    np.array(leftx, np.float32) * xm_per_pix, 2)
@@ -301,14 +362,14 @@ def process_image(img):
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     cv2.putText(result, "Vehicle is " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center', (50, 150),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv2.putText(result, 'Frame Number: ' + str(current_frame), (50, 200), cv2.FONT_HERSHEY_SIMPLEX,
+                1, (255, 255, 255), 2)
 
+    frame_counter = frame_counter + 1
     return result
 
 
 if __name__ == "__main__":
-
-    # Set TensorFlow logging so it isn't so verbose.
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     # Load the necessary parameters
     args = lfc.parse_args(sys.argv[1:])
@@ -322,10 +383,17 @@ if __name__ == "__main__":
     output_video = config['output_video']
     input_video = config['input_video']
 
+    frame_counter = 0
+    #last_used_frame_index = 0
+    #lanes = []
+
     original_video_clip = VideoFileClip(input_video)
     processed_video_clip = original_video_clip.fl_image(process_image)
 
     # Save the processed video file.
     processed_video_clip.write_videofile(output_video, audio=False)
+
+    # Print the framecount
+    logger.info("Frames processed: " + str(frame_counter))
 
     sys.exit(0)
