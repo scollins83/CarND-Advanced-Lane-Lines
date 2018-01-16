@@ -118,8 +118,6 @@ This code is in `video_processor.py` lines 252 through 274.
 After finding those lines, clear lines could be obtained.  
 ![alt text][lines_only]  
   
-From there, I was able to draw the lines back on the road
-![alt text][lines_on_road]
 
 Note also that I implemented a fairly simple smoothing mechanism using the class indicated in `lane_specification.py`. In that file, I stored each 'lane' information, including information from both right and left. From there, I coded in a couple of sanity checks to indicate whether the lane should be used in it's entirety, if it should be replaced by the last used lane, or whether only the left line and middle marker should be replaced by the preceding lane caputure's left line, middle marker, and measurements needed to calculate the radius of curvature and centeredness. The sanity checks that made the 'cut' were:
 1) Checking the distance on the polynomial fit object to see if the pixel distance was within +/-15% of the noted xm_per_pixel denominator value  
