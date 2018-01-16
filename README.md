@@ -22,14 +22,14 @@ The goals / steps of this project are the following:
 
 [original_calibration_image]: ./test/unit_tests/test_image.png "Original calibration image"
 [undistorted_calibration_image]: ./test/unit_tests/und_image.png "Undistorted"
-[undistorted]: ./tuning_images/resub_1_2_undistorted.jpg "Undistorted road"
+[undistorted]: ./output_images/example_2_undistorted.jpg "Undistorted road"
 [original]: ./test_images/test4.jpg "Original road"
-[binary]: ./tuning_images/resub_1_2_binary.jpg "Binary Example"
-[warped]: ./tuning_images/resub_1_2_warped.jpg "Warp Example"
-[warp_boxes]: ./tuning_images/resub_1_2_overlay.jpg "Warp Lines Highlighted"
-[lines_only]: ./tuning_images/resub_1_2_road.jpg "Road lines only"
-[lines_on_road]: ./tuning_images/resub_1_2_lines_on_road.jpg "Lines on Road"
-[image_on_road]: ./tuning_images/resub_1_2_road_round4.jpg "Output"
+[binary]: ./output_images/example_2_binary.jpg "Binary Example"
+[warped]: ./output_images/example_2_warped.jpg "Warp Example"
+[warp_boxes]: ./output_images/example_2_overlay.jpg "Warp Lines Highlighted"
+[lines_only]: ./output_images/example_2_road.jpg "Road lines only"
+[lines_on_road]: ./output_images/example_2_lines_on_road.jpg "Lines on Road"
+[image_on_road]: ./output_images/example_2_road_round4.jpg "Output"
 [video]: ./project_output_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -66,9 +66,9 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][undistorted_calibration_image]
 
-For the remainder of the code, I switched to the video_processor.py script, and again, the driver is in the default main method starting at line 308, and the main image processing is wrapped in a function that begins on line 156. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor quite a few things during tuning and then tuned the input parameters. 
+For the remainder of the code, I switched to the `video_processor.py` script, and again, the driver is in the default main method starting at line 372, and the main image processing is wrapped in a function that begins on line 157. I paused and coded along during the walkthrough video for this project a lot which is where a lot of the code comes from, in addition to the class content functions, but did refactor quite a few things during tuning and then tuned the input parameters. 
 
-In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 166, and saved the output in order to be able to tune the code later and provide images for this writeup. 
+In this case, I loaded the saved camera calibration dictionary, and applied the cv2 'undistort' function in line 176, and saved the output in order to be able to tune the code later and provide images for this writeup. 
 
 Original image in following processing examples:
 ![alt text][original]  
@@ -78,10 +78,10 @@ Undistorted:
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used both absolute sobel thresholds (function begins on lines 33-59) and color thresholds (function  on lines 112 - 137) to generate a binary image (thresholding steps at lines 169 through 177 in `video_processor.py`).  Here's an example of my output for this step.
+I used both absolute sobel thresholds (function begins on lines 33-61) and color thresholds (function  on lines 114 - 139) to generate a binary image (thresholding steps at lines 179 through 186 in `video_processor.py`).  The next image shows an example of my output for this step.
 Due to having had issues with tree shadows over the left line, I built in parameters to also threshold the 'L' HLS channel for lightness as that channel was important in augmenting my images to deal with shadows 
 for the Behavioral Cloning project, but quickly realized that I wanted to include the whole range of lightness, not filter any particular values. Thus, I set the parameters in `local_configuration.json` for 
-'color_l_thresh' min and max to 0 and 255, respectively, to essentially disable that portion of the `color_threshold` function.
+'color_l_thresh' min and max to 0 and 255, respectively, to essentially disable that portion of the `color_threshold` function. Instead, I used the S channel from HLS, and the v channel from HSV, setting values by examining arrays of values in my debugger. Throughout development, I also experimented with other color channels as well, so there are several parameters and ranges available in the `local_configuration.json` file that my code didn't use, but that I wanted to save for future use. 
 
 ![alt text][binary]
 
@@ -93,46 +93,52 @@ After several rounds of trial and error, I settled on the following source and d
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 540, 470      | 200, 0        | 
-| 200, 720      | 200, 720      |
-| 1190, 720     | 1150, 720     |
-| 780, 470      | 1150, 0       |
+| 550, 460      | 200, 0        | 
+| 225, 700      | 300, 720      |
+| 1120, 700     | 850, 720      |
+| 740, 460      | 1000, 0       |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image, although unfortunately I later accidentally overwrote the directory where I kept those particular images and thus did not retain them from preprocessing.
 
-However, I did save out the warped images themselves and show and example here, and used the appearance of the lane lines in these transforms and the appearance of noise to tune the offset and trapezoid measurement numbers to maximize bold lines and the least amount of noise in the transformed pictures in my sample images:
+However, I did save out the warped images themselves and show and example here, and used the appearance of the lane lines in these transforms and the appearance of noise to tune the offset and trapezoid measurement numbers to maximize bold lines and the least amount of noise around the lane lines in the transformed pictures in my sample images:
 
 ![alt text][warped]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-I used the one-dimensional convolution method noted in the class content and walkthrough video to find my lane lines, as it was a technique I hadn't tried before (I used histograms exclusively in past work with audio for event detection and timbre analysis). This code starts in video_processor.py line 199 through 277, and the Tracker class (used in the place of the suggested 'line' class for storing line attributes) in tracker.py. I tuned the height and width of the convolution window to find the lines, and then used a tracker object to return the curve centers (`video_processor.py`, line 199). 
-I then used the curve centers to find the window centroids of my warped image (`video_processor.py` line 206, and `tracker.py` line 26 through 60). 
+I used the one-dimensional convolution method noted in the class content and walkthrough video to find my lane lines, as it was a technique I hadn't tried before (I used histograms exclusively in past work with audio for event detection and timbre analysis). This code starts in video_processor.py line 208 through 274, and the Tracker class (used to store line attributes and compute window centroids for the convolution) in tracker.py. I tuned the height and width of the convolution window to find the lines, and then used a tracker object to return the curve centers (`video_processor.py`, line 208). 
+I then used the curve centers to find the window centroids of my warped image (`video_processor.py` line 215, and `tracker.py` line 26 through 60). 
 With those found, the window mask was used in order to be able to draw those areas on the image, and that's shown in `video_processor.py` lines 214 through 233, and the boxed lines were drawn onto the warped image. 
 
 ![alt text][warp_boxes]
 
 In order to actually get bona-fide lane lines from those convolutions, I used the numpy polyfit function to fit the left and right lanes to a 2nd degree polynomial (I did also explore what other orders of polynomials would do during tuning, but those results obviously weren't great). 
-This code is in `video_processor.py` lines 242 through 248. 
+This code is in `video_processor.py` lines 252 through 274. 
 
 After finding those lines, clear lines could be obtained.  
 ![alt text][lines_only]  
   
 From there, I was able to draw the lines back on the road
-![alt text][lines_on_road]  
+![alt text][lines_on_road]
+
+Note also that I implemented a fairly simple smoothing mechanism using the class indicated in `lane_specification.py`. In that file, I stored each 'lane' information, including information from both right and left. From there, I coded in a couple of sanity checks to indicate whether the lane should be used in it's entirety, if it should be replaced by the last used lane, or whether only the left line and middle marker should be replaced by the preceding lane caputure's left line, middle marker, and measurements needed to calculate the radius of curvature and centeredness. The sanity checks that made the 'cut' were:
+1) Checking the distance on the polynomial fit object to see if the pixel distance was within +/-15% of the noted xm_per_pixel denominator value  
+2) Checking to see if the width between the polynomial fit objects were within +/-5% of the previous frames' width.  
+3) If passing those, the left lane's max arg for the left_fix_x pixels to see if at least 95% of that value was greater than that of the preceding frame. If so, the left lane line, the middle marker, and the measurements needed for radius of curvature calculation was replaced with that of the preceding used frame. 
   
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines 277 through 296 in my code in `video_processor.py`. First, the x and y meters per pixel were estimated by using 3.7 meters as an estimate for the width of the lane, and 30 meters estimated as the length of the used portion of the lane.
+I did this in lines 341 through 354 in my code in `video_processor.py`. First, the x and y meters per pixel were estimated by using 3.7 meters as an estimate for the width of the lane, and 25.5 meters estimated as the length of the used portion of the lane, as measured by estimating 3m per dashed line, and taking the pixel height of a typical straight dashed line in a warped image and dividing the image height by that number.
 Those values were set in the `local_configuration.json` file, and passed to the Tracker object. I then obtained the ym_per_pixel and xm_per_pixel values from the Tracker's curve centers object, the lines were fit to the lane line boundary values found to draw the previous example picture. The curve radius was then calculated for each line. 
 Initially upon my first submission, I had those yardage estimates really wrong, but now they appear to be performing more reasonably (except in spots where it is difficult to recognize the line at all, in which case it jumps around).
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines 263 through 275 in my code in `video_processor.py`- I filled in the lane with green, and then added the radius of curvature and center lane information in lines 298 - 303.  
+I implemented this step in lines 326 through 338 in my code in `video_processor.py`- I filled in the lane with green, and then added the radius of curvature and center lane information in lines 355 - 366.  
 Here is an example of my result on a test image:
 
 ![alt text][image_on_road]
+
 
 ---
 
@@ -148,13 +154,5 @@ Here's a [link to my video result](./project_output_video.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Even after extensive tuning, adding and subtracting various thresholding techniques,  the model still has some trouble 
-if there are tree shadows on the left yellow line, and then has some recovery trouble after that inital skip happens. This
-is pronounced on the first large right curve, but did improve significantly on subsequent similar curves. 
-In the future to try to combat this, I would keep trying other color combinations to see if I could clean up the video at all, 
-and if this were for a professional setting, I would take the time to code up something to try a grid search of sorts 
-on the thresholding parameters and generated some sort of 'ground truth' to probably fit a classifier so a machine learning model could be trained
-to optimize the grid search (right now on tuning, I just eyeball it, but if it could pick up just like, the dimensions of the 
-green part on a grayscale version of the image as ground truth, it may be possible to do this). 
-Also, I would maybe explore some of the items from our first lane lines project which treated lines color agnostically and apply them to this project as well. 
-I noticed when I tried to apply the current pipeline to the challenge video, writing on the pavement and interruptions in the left line DID cause the pipeline to fail, so again, I would try to pick out parallel lines to start, maybe try something other than the one-dimensional convolutional method to see if other approaches get better results, and borrow some things from the first lane lines lesson to try to get the pipeline to ignore painted writing on the road. 
+The current smoothing I picked isn't particularly robust, and is highly dependent on the initial image, which is a failure point when checked on the challenge video. In the future, I'd change that and average things a bit more over more frames, or use some sort of moving average if possible. 
+Also, I found some really good color thresholds that should have worked, but trying to optimize them to all work together was pretty daunting for not much more payoff than I was already getting with the rest of my implementation. However, I think improving that would considerably improve this implementation's robustness. Also, this model is sensitive to writing on the roads, so I'd want to do something to exclude the parts in between the lane lines. 
